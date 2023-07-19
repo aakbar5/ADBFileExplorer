@@ -1,8 +1,10 @@
-source ./venv/bin/activate
-app=$(pwd)/src/app
-src=$(pwd)/src
-root=$(pwd)
-path=$app:$src:$root
+#!/bin/bash -i
+
+APP_HOME="$(dirname "$(realpath "$0")")"
+
+echo "============================="
+echo "ADBFileExplorer: ${APP_HOME}"
+
 export PYTHONUNBUFFERED=1
-export PYTHONPATH=$path:$PYTHONPATH
-python ./src/app
+source $APP_HOME/.venv/bin/activate
+python $APP_HOME/src/main.py

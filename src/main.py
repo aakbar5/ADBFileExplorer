@@ -17,10 +17,10 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from core.configurations import Resources, Application
-from core.main import Adb
-from gui.window import MainWindow
-from helpers.tools import read_string_from_file
+from app.core.configurations import Resources, Application
+from app.core.main import Adb
+from app.gui.window import MainWindow
+from app.helpers.tools import read_string_from_file
 
 if __name__ == '__main__':
     Application()
