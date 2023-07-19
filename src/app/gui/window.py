@@ -3,8 +3,9 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QInputDialog, QMenuBar, QMessageBox
 
-from app.core.configurations import Resources, Settings
-from app.core.main import Adb
+from app.core.resources import Resources
+from app.core.settings import Settings
+from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import MessageData, MessageType
 from app.data.repositories import DeviceRepository

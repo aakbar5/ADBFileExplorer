@@ -5,10 +5,10 @@ from typing import Union
 
 import adb_shell
 
-from app.core.configurations import Settings
+from app.core.settings import Settings
 from app.core.managers import PythonADBManager, ADBManager, WorkersManager
 from app.helpers.tools import Singleton
-from app.services import adb
+from app.services import adb_helper
 
 
 class Adb(metaclass=Singleton):
@@ -20,15 +20,15 @@ class Adb(metaclass=Singleton):
     @classmethod
     def start(cls):
         if cls.core == cls.PYTHON_ADB_SHELL:
-            if adb.kill_server().IsSuccessful:
+            if adb_helper.kill_server().IsSuccessful:
                 print("adb server stopped.")
 
             print('Using Python "adb-shell" version %s' % adb_shell.__version__)
 
-        elif cls.core == cls.EXTERNAL_TOOL_ADB and adb.validate():
-            print(adb.version().OutputData)
+        elif cls.core == cls.EXTERNAL_TOOL_ADB and adb_helper.validate():
+            print(adb_helper.version().OutputData)
 
-            adb_server = adb.start_server()
+            adb_server = adb_helper.start_server()
             if adb_server.ErrorData:
                 print(adb_server.ErrorData, file=sys.stderr)
 
@@ -45,7 +45,7 @@ class Adb(metaclass=Singleton):
             return True
 
         elif cls.core == cls.EXTERNAL_TOOL_ADB:
-            if adb.kill_server().IsSuccessful:
+            if adb_helper.kill_server().IsSuccessful:
                 print("ADB Server stopped")
             return True
 

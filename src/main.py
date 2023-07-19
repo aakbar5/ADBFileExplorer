@@ -17,8 +17,9 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from app.core.configurations import Resources, Application
-from app.core.main import Adb
+from app.core.resources import Resources
+from app.core.application import Application
+from app.core.adb import Adb
 from app.gui.window import MainWindow
 from app.helpers.tools import read_string_from_file
 
@@ -27,6 +28,8 @@ if __name__ == '__main__':
     Adb.start()
     app = QApplication(sys.argv)
 
+    app.setApplicationName("ADB File Explorer")
+    
     window = MainWindow()
     window.setStyleSheet(read_string_from_file(Resources.style_window))
     window.show()

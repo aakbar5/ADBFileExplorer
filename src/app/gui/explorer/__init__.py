@@ -2,7 +2,7 @@
 # Copyright (C) 2022  Azat Aldeshov
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
-from app.core.main import Adb
+from app.core.adb import Adb
 from app.core.managers import Global
 from app.gui.explorer.devices import DeviceExplorerWidget
 from app.gui.explorer.files import FileExplorerWidget

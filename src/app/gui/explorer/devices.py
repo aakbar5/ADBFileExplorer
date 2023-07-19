@@ -8,8 +8,8 @@ from PyQt5.QtGui import QPalette, QPixmap, QMovie
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStyledItemDelegate, QStyleOptionViewItem, QApplication, \
     QStyle, QListView
 
-from app.core.configurations import Resources
-from app.core.main import Adb
+from app.core.resources import Resources
+from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import DeviceType, MessageData
 from app.data.repositories import DeviceRepository

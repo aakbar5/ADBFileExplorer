@@ -8,7 +8,7 @@ from PyQt5.QtGui import QIcon, QPaintEvent, QPainter, QMovie
 from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QPushButton, QStyleOption, QStyle, \
     QGraphicsDropShadowEffect, QVBoxLayout, QScrollArea, QSizePolicy, QFrame, QGraphicsOpacityEffect, QProgressBar
 
-from app.core.configurations import Resources
+from app.core.resources import Resources
 from app.data.models import MessageType
 from app.helpers.tools import read_string_from_file
 

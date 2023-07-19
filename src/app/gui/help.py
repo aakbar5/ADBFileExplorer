@@ -4,7 +4,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication
 
-from app.core.configurations import Resources, Application
+from app.core.resources import Resources
+from app.core.application import Application
 
 
 class About(QWidget):

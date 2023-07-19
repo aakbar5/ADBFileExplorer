@@ -2,11 +2,11 @@
 # Copyright (C) 2022  Azat Aldeshov
 from typing import List
 
-from app.core.configurations import Settings
+from app.core.settings import Settings
 from app.core.managers import ADBManager
 from app.data.models import FileType, Device, File
 from app.helpers.converters import convert_to_devices, convert_to_file, convert_to_file_list_a
-from app.services import adb
+from app.services import adb_helper
 
 
 class FileRepository:
@@ -16,8 +16,8 @@ class FileRepository:
             return None, "No device selected!"
 
         path = ADBManager.clear_path(path)
-        args = adb.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ')]
-        response = adb.shell(ADBManager.get_device().id, args)
+        args = adb_helper.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ')]
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
 
@@ -26,8 +26,8 @@ class FileRepository:
             return None, "Unexpected string:\n%s" % response.OutputData
 
         if file.type == FileType.LINK:
-            args = adb.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ') + '/']
-            response = adb.shell(ADBManager.get_device().id, args)
+            args = adb_helper.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ') + '/']
+            response = adb_helper.shell(ADBManager.get_device().id, args)
             file.link_type = FileType.UNKNOWN
             if response.OutputData and response.OutputData.startswith('d'):
                 file.link_type = FileType.DIRECTORY
@@ -42,16 +42,16 @@ class FileRepository:
             return None, "No device selected!"
 
         path = ADBManager.path()
-        args = adb.ShellCommand.LS_ALL_LIST + [path.replace(' ', r'\ ')]
-        response = adb.shell(ADBManager.get_device().id, args)
+        args = adb_helper.ShellCommand.LS_ALL_LIST + [path.replace(' ', r'\ ')]
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful and response.ExitCode != 1:
             return [], response.ErrorData or response.OutputData
 
         if not response.OutputData:
             return [], response.ErrorData
 
-        args = adb.ShellCommand.LS_ALL_DIRS + [path.replace(' ', r'\ ') + "*/"]
-        response_dirs = adb.shell(ADBManager.get_device().id, args)
+        args = adb_helper.ShellCommand.LS_ALL_DIRS + [path.replace(' ', r'\ ') + "*/"]
+        response_dirs = adb_helper.shell(ADBManager.get_device().id, args)
         if not response_dirs.IsSuccessful and response_dirs.ExitCode != 1:
             return [], response_dirs.ErrorData or response_dirs.OutputData
 
@@ -63,26 +63,26 @@ class FileRepository:
     def rename(cls, file: File, name) -> (str, str):
         if name.__contains__('/') or name.__contains__('\\'):
             return None, "Invalid name"
-        args = [adb.ShellCommand.MV, file.path.replace(' ', r'\ '), (file.location + name).replace(' ', r'\ ')]
-        response = adb.shell(ADBManager.get_device().id, args)
+        args = [adb_helper.ShellCommand.MV, file.path.replace(' ', r'\ '), (file.location + name).replace(' ', r'\ ')]
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         return None, response.ErrorData or response.OutputData
 
     @classmethod
     def open_file(cls, file: File) -> (str, str):
-        args = [adb.ShellCommand.CAT, file.path.replace(' ', r'\ ')]
+        args = [adb_helper.ShellCommand.CAT, file.path.replace(' ', r'\ ')]
         if file.isdir:
             return None, "Can't open. %s is a directory" % file.path
-        response = adb.shell(ADBManager.get_device().id, args)
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
         return response.OutputData, response.ErrorData
 
     @classmethod
     def delete(cls, file: File) -> (str, str):
-        args = [adb.ShellCommand.RM, file.path.replace(' ', r'\ ')]
+        args = [adb_helper.ShellCommand.RM, file.path.replace(' ', r'\ ')]
         if file.isdir:
-            args = adb.ShellCommand.RM_DIR_FORCE + [file.path.replace(' ', r'\ ')]
-        response = adb.shell(ADBManager.get_device().id, args)
+            args = adb_helper.ShellCommand.RM_DIR_FORCE + [file.path.replace(' ', r'\ ')]
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful or response.OutputData:
             return None, response.ErrorData or response.OutputData
         return "%s '%s' has been deleted" % ('Folder' if file.isdir else 'File', file.path), None
@@ -106,7 +106,7 @@ class FileRepository:
             destination = Settings.device_downloads_path(ADBManager.get_device())
         if ADBManager.get_device() and source and destination:
             helper = cls.UpDownHelper(progress_callback)
-            response = adb.pull(ADBManager.get_device().id, source, destination, helper.call)
+            response = adb_helper.pull(ADBManager.get_device().id, source, destination, helper.call)
             if not response.IsSuccessful:
                 return None, response.ErrorData or "\n".join(helper.messages)
 
@@ -118,8 +118,8 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
-        args = [adb.ShellCommand.MKDIR, (ADBManager.path() + name).replace(' ', r"\ ")]
-        response = adb.shell(ADBManager.get_device().id, args)
+        args = [adb_helper.ShellCommand.MKDIR, (ADBManager.path() + name).replace(' ', r"\ ")]
+        response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
         return response.OutputData, response.ErrorData
@@ -128,7 +128,7 @@ class FileRepository:
     def upload(cls, progress_callback: callable, source: str) -> (str, str):
         if ADBManager.get_device() and ADBManager.path() and source:
             helper = cls.UpDownHelper(progress_callback)
-            response = adb.push(ADBManager.get_device().id, source, ADBManager.path(), helper.call)
+            response = adb_helper.push(ADBManager.get_device().id, source, ADBManager.path(), helper.call)
             if not response.IsSuccessful:
                 return None, response.ErrorData or "\n".join(helper.messages)
 
@@ -139,7 +139,7 @@ class FileRepository:
 class DeviceRepository:
     @classmethod
     def devices(cls) -> (List[Device], str):
-        response = adb.devices()
+        response = adb_helper.devices()
         if not response.IsSuccessful:
             return [], response.ErrorData or response.OutputData
 
@@ -151,14 +151,14 @@ class DeviceRepository:
         if not device_id:
             return None, None
 
-        response = adb.connect(device_id)
+        response = adb_helper.connect(device_id)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
         return response.OutputData, response.ErrorData
 
     @classmethod
     def disconnect(cls) -> (str, str):
-        response = adb.disconnect()
+        response = adb_helper.disconnect()
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
 

@@ -1,6 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from app.core.configurations import Settings
+from app.core.settings import Settings
 from app.helpers.tools import CommonProcess
 
 ADB_PATH = Settings.adb_path()

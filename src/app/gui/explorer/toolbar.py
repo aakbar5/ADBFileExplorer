@@ -4,8 +4,8 @@ from PyQt5.QtCore import QObject, QEvent
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
 
-from app.core.configurations import Resources
-from app.core.main import Adb
+from app.core.resources import Resources
+from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import MessageData, MessageType
 from app.data.repositories import FileRepository

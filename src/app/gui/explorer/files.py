@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QFileDialog, QStyle, QW
     QStyleOptionViewItem, QApplication, QListView, QVBoxLayout, QLabel, QSizePolicy, QHBoxLayout, QTextEdit, \
     QMainWindow
 
-from app.core.configurations import Resources
-from app.core.main import Adb
+from app.core.resources import Resources
+from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import FileType, MessageData, MessageType
 from app.data.repositories import FileRepository

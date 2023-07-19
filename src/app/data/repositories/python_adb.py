@@ -8,11 +8,11 @@ from typing import List
 
 from usb1 import USBContext
 
-from app.core.configurations import Settings
+from app.core.settings import Settings
 from app.core.managers import PythonADBManager
 from app.data.models import Device, File, FileType
 from app.helpers.converters import __converter_to_permissions_default__
-from app.services.adb import ShellCommand
+from app.services.adb_helper import ShellCommand
 
 
 class FileRepository:

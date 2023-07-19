@@ -2,7 +2,7 @@
 # Copyright (C) 2022  Azat Aldeshov
 from typing import List
 
-from app.core.main import Adb
+from app.core.adb import Adb
 from app.data.models import Device, File
 from app.data.repositories import android_adb, python_adb
 
