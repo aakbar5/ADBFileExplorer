@@ -1,0 +1,17 @@
+{
+    "editor.fontFamily": "'Fira Code'",
+    "editor.fontLigatures": true,
+    "outline.showVariables": false,
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.venv": true
+    },
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/.venv": true
+    },
+    "files.watcherExclude": {
+        "**/__pycache__": true,
+        "**/.venv": true
+    }
+}
