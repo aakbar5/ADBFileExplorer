@@ -20,9 +20,17 @@ class About(QWidget):
         about_text += '<br/>'
         about_text += "Open source application written in <i>Python</i><br/>"
         about_text += "UI Library: <i>PyQt5</i><br/>"
+
+        az_link = 'https://github.com/Aldeshov/ADBFileExplorer'
         about_text += "Developer: Azat Aldeshov<br/>"
-        link = 'https://github.com/Aldeshov/ADBFileExplorer'
-        about_text += "Github: <a target='_blank' href='%s'>%s</a>" % (link, link)
+        about_text += "Github: <a target='_blank' href='%s'>%s</a>" % (az_link, az_link)
+        about_text += "<br/>"
+
+        aa_link = 'https://github.com/aakbar5/ADBFileExplorer'
+        about_text += "Developer: aakbar<br/>"
+        about_text += "Github: <a target='_blank' href='%s'>%s</a>" % (aa_link, aa_link)
+        about_text += "<br/>"
+
         about_label = QLabel(about_text, self)
         about_label.setOpenExternalLinks(True)
         about_label.move(10, 100)
