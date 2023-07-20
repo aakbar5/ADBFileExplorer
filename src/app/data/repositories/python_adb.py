@@ -4,7 +4,7 @@ import datetime
 import logging
 import os
 import shlex
-from typing import List
+from typing import List, Tuple
 
 from usb1 import USBContext
 
@@ -17,7 +17,7 @@ from app.services.adb_helper import ShellCommand
 
 class FileRepository:
     @classmethod
-    def file(cls, path: str) -> (File, str):
+    def file(cls, path: str) -> Tuple[File, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -48,7 +48,7 @@ class FileRepository:
             return None, error
 
     @classmethod
-    def files(cls) -> (List[File], str):
+    def files(cls) -> Tuple[List[File], str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -91,7 +91,7 @@ class FileRepository:
             return files, error
 
     @classmethod
-    def rename(cls, file: File, name: str) -> (str, str):
+    def rename(cls, file: File, name: str) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -110,7 +110,7 @@ class FileRepository:
             return None, error
 
     @classmethod
-    def open_file(cls, file: File) -> (str, str):
+    def open_file(cls, file: File) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -126,7 +126,7 @@ class FileRepository:
             return None, error
 
     @classmethod
-    def delete(cls, file: File) -> (str, str):
+    def delete(cls, file: File) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -158,7 +158,7 @@ class FileRepository:
             self.callback(path, int(self.written / self.total * 100))
 
     @classmethod
-    def download(cls, progress_callback: callable, source: str, destination: str = None) -> (str, str):
+    def download(cls, progress_callback: callable, source: str, destination: str = None) -> Tuple[str, str]:
         if not destination:
             destination = Settings.device_downloads_path(PythonADBManager.get_device())
 
@@ -178,7 +178,7 @@ class FileRepository:
         return None, None
 
     @classmethod
-    def new_folder(cls, name) -> (str, str):
+    def new_folder(cls, name) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -194,7 +194,7 @@ class FileRepository:
             return None, error
 
     @classmethod
-    def upload(cls, progress_callback: callable, source: str) -> (str, str):
+    def upload(cls, progress_callback: callable, source: str) -> Tuple[str, str]:
         helper = cls.UpDownHelper(progress_callback)
         destination = PythonADBManager.path() + os.path.basename(os.path.normpath(source))
         if PythonADBManager.device and PythonADBManager.device.available and PythonADBManager.path() and source:
@@ -213,7 +213,7 @@ class FileRepository:
 
 class DeviceRepository:
     @classmethod
-    def devices(cls) -> (List[Device], str):
+    def devices(cls) -> Tuple[List[Device], str]:
         if PythonADBManager.device:
             PythonADBManager.device.close()
 
@@ -238,7 +238,7 @@ class DeviceRepository:
         return devices, str("\n".join(errors))
 
     @classmethod
-    def connect(cls, device_id: str) -> (str, str):
+    def connect(cls, device_id: str) -> Tuple[str, str]:
         try:
             if PythonADBManager.device:
                 PythonADBManager.device.close()
@@ -256,7 +256,7 @@ class DeviceRepository:
             return None, error
 
     @classmethod
-    def disconnect(cls) -> (str, str):
+    def disconnect(cls) -> Tuple[str, str]:
         try:
             if PythonADBManager.device:
                 PythonADBManager.device.close()

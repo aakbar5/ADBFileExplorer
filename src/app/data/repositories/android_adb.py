@@ -1,6 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from typing import List
+from typing import List, Tuple
 
 from app.core.settings import Settings
 from app.core.managers import ADBManager
@@ -11,7 +11,7 @@ from app.services import adb_helper
 
 class FileRepository:
     @classmethod
-    def file(cls, path: str) -> (File, str):
+    def file(cls, path: str) -> Tuple[File, str]:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
@@ -37,7 +37,7 @@ class FileRepository:
         return file, response.ErrorData
 
     @classmethod
-    def files(cls) -> (List[File], str):
+    def files(cls) -> Tuple[List[File], str]:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
@@ -60,7 +60,7 @@ class FileRepository:
         return files, response.ErrorData
 
     @classmethod
-    def rename(cls, file: File, name) -> (str, str):
+    def rename(cls, file: File, name) -> Tuple[str, str]:
         if name.__contains__('/') or name.__contains__('\\'):
             return None, "Invalid name"
         args = [adb_helper.ShellCommand.MV, file.path.replace(' ', r'\ '), (file.location + name).replace(' ', r'\ ')]
@@ -68,7 +68,7 @@ class FileRepository:
         return None, response.ErrorData or response.OutputData
 
     @classmethod
-    def open_file(cls, file: File) -> (str, str):
+    def open_file(cls, file: File) -> Tuple[str, str]:
         args = [adb_helper.ShellCommand.CAT, file.path.replace(' ', r'\ ')]
         if file.isdir:
             return None, "Can't open. %s is a directory" % file.path
@@ -78,7 +78,7 @@ class FileRepository:
         return response.OutputData, response.ErrorData
 
     @classmethod
-    def delete(cls, file: File) -> (str, str):
+    def delete(cls, file: File) -> Tuple[str, str]:
         args = [adb_helper.ShellCommand.RM, file.path.replace(' ', r'\ ')]
         if file.isdir:
             args = adb_helper.ShellCommand.RM_DIR_FORCE + [file.path.replace(' ', r'\ ')]
@@ -101,7 +101,7 @@ class FileRepository:
                 self.messages.append(data)
 
     @classmethod
-    def download(cls, progress_callback: callable, source: str, destination: str) -> (str, str):
+    def download(cls, progress_callback: callable, source: str, destination: str) -> Tuple[str, str]:
         if not destination:
             destination = Settings.device_downloads_path(ADBManager.get_device())
         if ADBManager.get_device() and source and destination:
@@ -114,7 +114,7 @@ class FileRepository:
         return None, None
 
     @classmethod
-    def new_folder(cls, name) -> (str, str):
+    def new_folder(cls, name) -> Tuple[str, str]:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
@@ -125,7 +125,7 @@ class FileRepository:
         return response.OutputData, response.ErrorData
 
     @classmethod
-    def upload(cls, progress_callback: callable, source: str) -> (str, str):
+    def upload(cls, progress_callback: callable, source: str) -> Tuple[str, str]:
         if ADBManager.get_device() and ADBManager.path() and source:
             helper = cls.UpDownHelper(progress_callback)
             response = adb_helper.push(ADBManager.get_device().id, source, ADBManager.path(), helper.call)
@@ -138,7 +138,7 @@ class FileRepository:
 
 class DeviceRepository:
     @classmethod
-    def devices(cls) -> (List[Device], str):
+    def devices(cls) -> Tuple[List[Device], str]:
         response = adb_helper.devices()
         if not response.IsSuccessful:
             return [], response.ErrorData or response.OutputData
@@ -147,7 +147,7 @@ class DeviceRepository:
         return devices, response.ErrorData
 
     @classmethod
-    def connect(cls, device_id) -> (str, str):
+    def connect(cls, device_id) -> Tuple[str, str]:
         if not device_id:
             return None, None
 
@@ -157,7 +157,7 @@ class DeviceRepository:
         return response.OutputData, response.ErrorData
 
     @classmethod
-    def disconnect(cls) -> (str, str):
+    def disconnect(cls) -> Tuple[str, str]:
         response = adb_helper.disconnect()
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
