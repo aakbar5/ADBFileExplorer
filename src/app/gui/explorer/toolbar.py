@@ -5,6 +5,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
 
 from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import MessageData, MessageType
@@ -57,7 +58,7 @@ class UploadTools(QToolButton):
             if error:
                 Global().communicate.notification.emit(
                     MessageData(
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         title="Creating folder",
                         body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                     )
@@ -66,7 +67,7 @@ class UploadTools(QToolButton):
                 Global().communicate.notification.emit(
                     MessageData(
                         title="Creating folder",
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         body=data,
                     )
                 )
@@ -107,7 +108,7 @@ class UploadTools(QToolButton):
             if error:
                 Global().communicate.notification.emit(
                     MessageData(
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         title='Upload error',
                         body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                     )
@@ -116,7 +117,7 @@ class UploadTools(QToolButton):
                 Global().communicate.notification.emit(
                     MessageData(
                         title='Uploaded',
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         body=data,
                     )
                 )
@@ -138,8 +139,15 @@ class PathBar(QWidget):
         super(PathBar, self).__init__(parent)
         self.setLayout(QHBoxLayout(self))
 
-        self.prefix = Adb.manager().get_device().name + ":"
-        self.value = Adb.manager().path()
+        device_name = Adb.manager().get_device().name
+        device_id = Adb.manager().get_device().id
+        device_path = Adb.manager().path()
+        old_device_path = Settings.get_value(f"{device_id}/path")
+        if old_device_path:
+            device_path = old_device_path
+
+        self.prefix = device_name + ":"
+        self.value = device_path
 
         self.text = QLineEdit(self)
         self.text.installEventFilter(self)
@@ -158,6 +166,11 @@ class PathBar(QWidget):
 
         self.layout().setContentsMargins(0, 0, 0, 0)
         Global().communicate.path_toolbar__refresh.connect(self._clear)
+
+        # If old path is available,
+        # update gui to move to different folder
+        if old_device_path:
+            self._action()
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         if obj == self.text and event.type() == QEvent.FocusIn:
@@ -180,7 +193,7 @@ class PathBar(QWidget):
             Global().communicate.path_toolbar__refresh.emit()
             Global().communicate.notification.emit(
                 MessageData(
-                    timeout=10000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Opening folder",
                     body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                 )
@@ -191,7 +204,7 @@ class PathBar(QWidget):
             Global().communicate.path_toolbar__refresh.emit()
             Global().communicate.notification.emit(
                 MessageData(
-                    timeout=10000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Opening folder",
                     body="<span style='color: red; font-weight: 600'> Cannot open location </span>",
                 )

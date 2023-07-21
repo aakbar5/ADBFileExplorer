@@ -153,7 +153,7 @@ class DeviceExplorerWidget(QWidget):
             Global().communicate.notification.emit(
                 MessageData(
                     title='Devices',
-                    timeout=15000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     body="<span style='color: red; font-weight: 600'> %s </span>" % error
                 )
             )

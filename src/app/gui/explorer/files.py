@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QFileDialog, QStyle, QW
     QMainWindow
 
 from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import FileType, MessageData, MessageType
@@ -307,7 +308,7 @@ class FileExplorerWidget(QWidget):
                 Global().communicate.notification.emit(
                     MessageData(
                         title='Files',
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         body="<span style='color: red; font-weight: 600'> %s </span>" % error
                     )
                 )
@@ -423,7 +424,7 @@ class FileExplorerWidget(QWidget):
                 if data:
                     Global().communicate.notification.emit(
                         MessageData(
-                            timeout=10000,
+                            timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                             title="Delete",
                             body=data,
                         )
@@ -431,7 +432,7 @@ class FileExplorerWidget(QWidget):
                 if error:
                     Global().communicate.notification.emit(
                         MessageData(
-                            timeout=10000,
+                            timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                             title="Delete",
                             body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                         )

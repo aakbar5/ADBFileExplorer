@@ -2,7 +2,7 @@
 # Copyright (C) 2022  Azat Aldeshov
 from typing import List, Tuple
 
-from app.core.settings import Settings
+from app.core.settings import SettingsOptions, Settings
 from app.core.managers import ADBManager
 from app.data.models import FileType, Device, File
 from app.helpers.converters import convert_to_devices, convert_to_file, convert_to_file_list_a
@@ -103,7 +103,8 @@ class FileRepository:
     @classmethod
     def download(cls, progress_callback: callable, source: str, destination: str) -> Tuple[str, str]:
         if not destination:
-            destination = Settings.device_downloads_path(ADBManager.get_device())
+            destination = Settings.get_value(SettingsOptions.DOWNLOAD_PATH, ADBManager.get_device())
+
         if ADBManager.get_device() and source and destination:
             helper = cls.UpDownHelper(progress_callback)
             response = adb_helper.pull(ADBManager.get_device().id, source, destination, helper.call)

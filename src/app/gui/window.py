@@ -4,12 +4,13 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QInputDialog, QMenuBar, QMessageBox
 
 from app.core.resources import Resources
-from app.core.settings import Settings
+from app.core.settings import SettingsOptions, Settings
 from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import MessageData, MessageType
 from app.data.repositories import DeviceRepository
 from app.gui.explorer import MainExplorer
+from app.gui.explorer.preference import PerferenceDialog
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
@@ -41,6 +42,14 @@ class MenuBar(QMenuBar):
         devices_action.triggered.connect(Global().communicate.devices.emit)
         self.file_menu.addAction(devices_action)
 
+        self.file_menu.addSeparator()
+
+        self.preference_action = QAction('&Preferences', self)
+        self.preference_action.triggered.connect(self.show_perference_dialog)
+        self.file_menu.addAction(self.preference_action)
+
+        self.file_menu.addSeparator()
+
         exit_action = QAction('&Exit', self)
         exit_action.setShortcut('Alt+Q')
         exit_action.triggered.connect(qApp.quit)
@@ -49,6 +58,19 @@ class MenuBar(QMenuBar):
         about_action = QAction('About', self)
         about_action.triggered.connect(self.about.show)
         self.help_menu.addAction(about_action)
+
+    def show_perference_dialog(self):
+        perfDlg = PerferenceDialog()
+        perfDlg_ret = perfDlg.exec_()
+        if perfDlg_ret:
+            Settings.set_value(SettingsOptions.ADB_PATH, perfDlg.widget_adb_path.text())
+            Settings.set_value(SettingsOptions.ADB_CORE, perfDlg.widget_adb_core.currentText())
+            Settings.set_value(SettingsOptions.NOTIFICATION_TIMEOUT, perfDlg.widget_notification_timeout.text())
+            Settings.set_value(SettingsOptions.SHOW_WELCOME_MSG, perfDlg.widget_show_welcome.isChecked())
+            Settings.set_value(SettingsOptions.RESTORE_WIN_GEOMETRY, perfDlg.widget_win_geometry.isChecked())
+            Settings.set_value(SettingsOptions.ADB_KILL_AT_EXIT, perfDlg.widget_adb_kill_server_at_exit.isChecked())
+            Settings.set_value(SettingsOptions.PRESERVE_TIMESTAMP, perfDlg.widget_preserve_timestamp.isChecked())
+            Settings.set_value(SettingsOptions.ADB_AS_ROOT, perfDlg.widget_adb_as_root.isChecked())
 
     def disconnect(self):
         worker = AsyncRepositoryWorker(
@@ -101,7 +123,7 @@ class MenuBar(QMenuBar):
             Global().communicate.notification.emit(
                 MessageData(
                     title="Disconnect",
-                    timeout=15000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     body=data
                 )
             )
@@ -109,7 +131,7 @@ class MenuBar(QMenuBar):
             Global().communicate.devices.emit()
             Global().communicate.notification.emit(
                 MessageData(
-                    timeout=15000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Disconnect",
                     body="<span style='color: red; font-weight: 600'></span>" % error
                 )
@@ -123,12 +145,12 @@ class MenuBar(QMenuBar):
                 Global().communicate.files.emit()
             elif Adb.core == Adb.EXTERNAL_TOOL_ADB:
                 Global().communicate.devices.emit()
-            Global().communicate.notification.emit(MessageData(title="Connecting to device", timeout=15000, body=data))
+            Global().communicate.notification.emit(MessageData(title="Connecting to device", timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT), body=data))
         if error:
             Global().communicate.devices.emit()
             Global().communicate.notification.emit(
                 MessageData(
-                    timeout=15000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Connect to device",
                     body="<span style='color: red; font-weight: 600'>%s</span>" % error
                 )
@@ -143,7 +165,9 @@ class MainWindow(QMainWindow):
         self.setMenuBar(MenuBar(self))
         self.setCentralWidget(MainExplorer(self))
 
-        self.resize(640, 480)
+        self.resize(Settings.get_value(SettingsOptions.WIN_SIZE))
+        self.move(Settings.get_value(SettingsOptions.WIN_POS))
+
         self.setMinimumSize(480, 360)
         self.setWindowTitle('ADB File Explorer')
         self.setWindowIcon(QIcon(Resources.icon_logo))
@@ -158,14 +182,17 @@ class MainWindow(QMainWindow):
         self.notification_center = NotificationCenter(self)
         Global().communicate.notification.connect(self.notify)
 
-        # Welcome notification texts
-        welcome_title = "Welcome to ADBFileExplorer!"
-        welcome_body = "Here you can see the list of your connected adb devices. Click one of them to see files.<br/>"\
-                       "Current selected core: <strong>%s</strong><br/>" \
-                       "To change it - <code style='color: blue'>settings.json</code> file" % Settings.adb_core()
+        if Settings.get_value(SettingsOptions.SHOW_WELCOME_MSG):
+            # Welcome notification texts
+            welcome_title = "Welcome to ADBFileExplorer!"
+            welcome_body = "Here you can see the list of your connected adb devices. Click one of them to see files.<br/>"\
+                        "Current selected core: <strong>%s</strong><br/>" \
+                        "To change it - <code style='color: blue'>settings.json</code> file" % Settings.get_value(SettingsOptions.ADB_CORE)
 
         Global().communicate.status_bar.emit('Ready', 5000)
-        Global().communicate.notification.emit(MessageData(title=welcome_title, body=welcome_body, timeout=30000))
+
+        if Settings.get_value(SettingsOptions.SHOW_WELCOME_MSG):
+            Global().communicate.notification.emit(MessageData(title=welcome_title, body=welcome_body, timeout=30000))
 
     def notify(self, data: MessageData):
         message = self.notification_center.append_notification(
@@ -178,14 +205,28 @@ class MainWindow(QMainWindow):
             data.message_catcher(message)
 
     def closeEvent(self, event):
+        Settings.set_value("win_size", self.size())
+        Settings.set_value("win_pos", self.pos())
+
+        if Adb.manager().get_device():
+            device_name = Adb.manager().get_device().name
+            device_path = Adb.manager().path()
+            device_id = Adb.manager().get_device().id
+            device_type = Adb.manager().get_device().type
+            print(f"Device name: {device_name}")
+            print(f"Device id: {device_id}")
+            print(f"Device type: {device_type}")
+            print(f"Device path: {device_path}")
+            Settings.set_value(f"{device_id}/path", device_path)
+
         if Adb.core == Adb.EXTERNAL_TOOL_ADB:
-            if Settings.adb_kill_server_at_exit() is None:
+            if Settings.get_value(SettingsOptions.ADB_KILL_AT_EXIT) is None:
                 reply = QMessageBox.question(self, 'ADB Server', "Do you want to kill adb server?",
                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
                 if reply == QMessageBox.Yes:
                     Adb.stop()
-            elif Settings.adb_kill_server_at_exit():
+            elif Settings.get_value(SettingsOptions.ADB_KILL_AT_EXIT):
                 Adb.stop()
         elif Adb.core == Adb.PYTHON_ADB_SHELL:
             Adb.stop()

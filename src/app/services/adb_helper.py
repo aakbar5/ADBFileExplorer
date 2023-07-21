@@ -1,11 +1,11 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from app.core.settings import Settings
+from app.core.settings import SettingsOptions, Settings
 from app.helpers.tools import CommonProcess
 
-ADB_PATH = Settings.adb_path()
-RUN_AS_ROOT = Settings.adb_run_as_root()
-PRESERVE_TIMESTAMP = Settings.preserve_timestamp()
+ADB_PATH = Settings.get_value(SettingsOptions.ADB_PATH)
+ADB_AS_ROOT = Settings.get_value(SettingsOptions.ADB_AS_ROOT)
+PRESERVE_TIMESTAMP = Settings.get_value(SettingsOptions.PRESERVE_TIMESTAMP)
 
 
 class Parameter:
@@ -90,7 +90,7 @@ def push(device_id: str, source_path: str, destination_path: str, stdout_callbac
 
 
 def shell(device_id: str, args: list):
-    if RUN_AS_ROOT:
+    if ADB_AS_ROOT:
         return CommonProcess([ADB_PATH, Parameter.DEVICE, device_id, Parameter.ROOT] + args)
     return CommonProcess([ADB_PATH, Parameter.DEVICE, device_id, Parameter.SHELL] + args)
 

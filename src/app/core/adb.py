@@ -5,7 +5,7 @@ from typing import Union
 
 import adb_shell
 
-from app.core.settings import Settings
+from app.core.settings import SettingsOptions, Settings
 from app.core.managers import PythonADBManager, ADBManager, WorkersManager
 from app.helpers.tools import Singleton
 from app.services import adb_helper
@@ -15,7 +15,7 @@ class Adb(metaclass=Singleton):
     PYTHON_ADB_SHELL = 'python'  # Python library `adb-shell`
     EXTERNAL_TOOL_ADB = 'external'  # Command-line tool `adb`
 
-    core = Settings.adb_core()
+    core = Settings.get_value(SettingsOptions.ADB_CORE)
 
     @classmethod
     def start(cls):
