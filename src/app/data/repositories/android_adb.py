@@ -15,7 +15,7 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
-        path = ADBManager.clear_path(path)
+        path = ADBManager.set_path(path)
         args = adb_helper.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ')]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:

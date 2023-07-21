@@ -18,7 +18,8 @@ class ADBManager:
 
     @classmethod
     def path(cls) -> str:
-        return posixpath.join('/', *cls.__path) + '/' if cls.__path else '/'
+        def_path = '/'
+        return posixpath.join('/', *cls.__path) + '/' if cls.__path else def_path
 
     @classmethod
     def open(cls, file: File) -> bool:
@@ -53,17 +54,22 @@ class ADBManager:
     @classmethod
     def set_device(cls, device: Device) -> bool:
         if device:
-            cls.clear()
+            cls.clear_device()
             cls.__device = device
             return True
 
     @classmethod
-    def clear(cls):
+    def clear_device(cls):
         cls.__device = None
         cls.__path.clear()
 
+    @classmethod
+    def clear_path(cls):
+        cls.__path.clear()
+        return True
+
     @staticmethod
-    def clear_path(path: str) -> str:
+    def set_path(path: str) -> str:
         return posixpath.normpath(path)
 
 

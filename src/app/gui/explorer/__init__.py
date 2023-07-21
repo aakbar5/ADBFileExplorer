@@ -26,7 +26,7 @@ class MainExplorer(QWidget):
 
     def devices(self):
         self.clear()
-        Adb.manager().clear()
+        Adb.manager().clear_device()
 
         self.body = DeviceExplorerWidget(self)
         self.layout().addWidget(self.body)

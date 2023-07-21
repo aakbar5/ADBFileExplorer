@@ -23,7 +23,7 @@ class FileRepository:
         if not PythonADBManager.device.available:
             return None, "Device not available!"
         try:
-            path = PythonADBManager.clear_path(path)
+            path = PythonADBManager.set_path(path)
             mode, size, mtime = PythonADBManager.device.stat(path)
             file = File(
                 name=os.path.basename(os.path.normpath(path)),
