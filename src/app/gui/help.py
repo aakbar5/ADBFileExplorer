@@ -31,6 +31,11 @@ class About(QWidget):
         about_text += "Github: <a target='_blank' href='%s'>%s</a>" % (aa_link, aa_link)
         about_text += "<br/>"
 
+        fa_link = 'https://developers.google.com/fonts/faq'
+        about_text += "Icons: SIL Open Font License<br/>"
+        about_text += "Web: <a target='_blank' href='%s'>%s</a>" % (fa_link, fa_link)
+        about_text += "<br/>"
+
         about_label = QLabel(about_text, self)
         about_label.setOpenExternalLinks(True)
         about_label.move(10, 100)
@@ -38,7 +43,7 @@ class About(QWidget):
         self.setAttribute(Qt.WA_QuitOnClose, False)
         self.setWindowIcon(QIcon(Resources.icon_logo))
         self.setWindowTitle('About')
-        self.setFixedHeight(320)
+        self.setFixedHeight(400)
         self.setFixedWidth(400)
 
         center = QApplication.desktop().availableGeometry(self).center()
