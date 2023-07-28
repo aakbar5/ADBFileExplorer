@@ -16,7 +16,7 @@ from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import FileType, MessageData, MessageType
 from app.data.repositories import FileRepository
-from app.gui.explorer.toolbar import ParentButton, UploadTools, PathBar
+from app.gui.explorer.toolbar import ParentButton, UploadTools, PathBar, HomeButton, RefreshButton
 from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper, read_string_from_file
 
 
@@ -64,9 +64,17 @@ class FileExplorerToolbar(QWidget):
         self.upload_tools.setSizePolicy(policy)
         self.layout().addWidget(self.upload_tools)
 
+        self.home_button = HomeButton(self)
+        self.home_button.setSizePolicy(policy)
+        self.layout().addWidget(self.home_button)
+
         self.parent_button = ParentButton(self)
         self.parent_button.setSizePolicy(policy)
         self.layout().addWidget(self.parent_button)
+
+        self.refresh_button = RefreshButton(self)
+        self.refresh_button.setSizePolicy(policy)
+        self.layout().addWidget(self.refresh_button)
 
         self.path_bar = PathBar(self)
         policy.setHorizontalStretch(8)
@@ -199,7 +207,7 @@ class FileListModel(QAbstractListModel):
                         body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                     )
                 )
-            Global.communicate.files__refresh.emit()
+            Global.communicate.files_refresh.emit()
         return super(FileListModel, self).setData(index, value, role)
 
     def data(self, index: QModelIndex, role: int = ...) -> Any:
@@ -261,7 +269,7 @@ class FileExplorerWidget(QWidget):
         self.text_view_window = None
         self.setLayout(self.main_layout)
 
-        Global().communicate.files__refresh.connect(self.update)
+        Global().communicate.files_refresh.connect(self.update)
 
     @property
     def file(self):
@@ -292,10 +300,10 @@ class FileExplorerWidget(QWidget):
 
             # Then start async worker
             worker.start()
-            Global().communicate.path_toolbar__refresh.emit()
+            Global().communicate.path_toolbar_refresh.emit()
 
     def close(self) -> bool:
-        Global().communicate.files__refresh.disconnect()
+        Global().communicate.files_refresh.disconnect()
         return super(FileExplorerWidget, self).close()
 
     def _async_response(self, files: list, error: str):
@@ -329,7 +337,7 @@ class FileExplorerWidget(QWidget):
 
     def open(self, index: QModelIndex = ...):
         if Adb.manager().open(self.model.items[index.row()]):
-            Global().communicate.files__refresh.emit()
+            Global().communicate.files_refresh.emit()
 
     def context_menu(self, pos: QPoint):
         menu = QMenu()
@@ -437,7 +445,7 @@ class FileExplorerWidget(QWidget):
                             body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                         )
                     )
-            Global.communicate.files__refresh.emit()
+            Global.communicate.files_refresh.emit()
 
     def download_to(self):
         dir_name = QFileDialog.getExistingDirectory(self, 'Download to', '~')

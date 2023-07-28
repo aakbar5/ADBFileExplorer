@@ -99,8 +99,8 @@ class Communicate(QObject):
     devices = QtCore.pyqtSignal()
 
     up = QtCore.pyqtSignal()
-    files__refresh = QtCore.pyqtSignal()
-    path_toolbar__refresh = QtCore.pyqtSignal()
+    files_refresh = QtCore.pyqtSignal()
+    path_toolbar_refresh = QtCore.pyqtSignal()
 
     status_bar = QtCore.pyqtSignal(str, int)  # Message, Duration
     notification = QtCore.pyqtSignal(MessageData)

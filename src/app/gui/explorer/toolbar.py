@@ -71,7 +71,7 @@ class UploadTools(QToolButton):
                         body=data,
                     )
                 )
-            Global().communicate.files__refresh.emit()
+            Global().communicate.files_refresh.emit()
 
     class FilesUploader:
         UPLOAD_WORKER_ID = 398
@@ -103,7 +103,7 @@ class UploadTools(QToolButton):
                     helper.setup(worker, worker.update_loading_widget)
                     worker.start()
             else:
-                Global().communicate.files__refresh.emit()
+                Global().communicate.files_refresh.emit()
 
             if error:
                 Global().communicate.notification.emit(
@@ -123,13 +123,34 @@ class UploadTools(QToolButton):
                 )
 
 
+class HomeButton(QToolButton):
+    def __init__(self, parent):
+        super(HomeButton, self).__init__(parent)
+        self.action = QAction(QIcon(Resources.icon_home), 'Home', self)
+        self.action.triggered.connect(
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().clear_path() else ''
+        )
+        self.setDefaultAction(self.action)
+
+
+class RefreshButton(QToolButton):
+    def __init__(self, parent):
+        super(RefreshButton, self).__init__(parent)
+        self.action = QAction(QIcon(Resources.icon_refresh), 'Refresh', self)
+        self.action.setShortcut('F5')
+        self.action.triggered.connect(
+            lambda: Global().communicate.files_refresh.emit()
+        )
+        self.setDefaultAction(self.action)
+
+
 class ParentButton(QToolButton):
     def __init__(self, parent):
         super(ParentButton, self).__init__(parent)
         self.action = QAction(QIcon(Resources.icon_up), 'Parent', self)
         self.action.setShortcut('Escape')
         self.action.triggered.connect(
-            lambda: Global().communicate.files__refresh.emit() if Adb.worker().check(300) and Adb.manager().up() else ''
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().up() else ''
         )
         self.setDefaultAction(self.action)
 
@@ -165,7 +186,7 @@ class PathBar(QWidget):
         self.layout().addWidget(self.go)
 
         self.layout().setContentsMargins(0, 0, 0, 0)
-        Global().communicate.path_toolbar__refresh.connect(self._clear)
+        Global().communicate.path_toolbar_refresh.connect(self._clear)
 
         # If old path is available,
         # update gui to move to different folder
@@ -190,7 +211,7 @@ class PathBar(QWidget):
         self.text.clearFocus()
         file, error = FileRepository.file(self.value)
         if error:
-            Global().communicate.path_toolbar__refresh.emit()
+            Global().communicate.path_toolbar_refresh.emit()
             Global().communicate.notification.emit(
                 MessageData(
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
@@ -199,9 +220,9 @@ class PathBar(QWidget):
                 )
             )
         elif file and Adb.manager().go(file):
-            Global().communicate.files__refresh.emit()
+            Global().communicate.files_refresh.emit()
         else:
-            Global().communicate.path_toolbar__refresh.emit()
+            Global().communicate.path_toolbar_refresh.emit()
             Global().communicate.notification.emit(
                 MessageData(
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),

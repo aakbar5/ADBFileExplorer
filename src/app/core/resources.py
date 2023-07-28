@@ -24,6 +24,8 @@ class Resources:
     icon_close = resource_filename('resources.icons', 'close.svg')
     icon_phone = resource_filename('resources.icons', 'phone.svg')
     icon_phone_unknown = resource_filename('resources.icons', 'phone_unknown.svg')
+    icon_home = resource_filename('resources.icons', 'home.svg')
+    icon_refresh = resource_filename('resources.icons', 'refresh.svg')
     icon_plus = resource_filename('resources.icons', 'plus.svg')
     icon_up = resource_filename('resources.icons', 'up.svg')
     icon_arrow = resource_filename('resources.icons', 'arrow.svg')
