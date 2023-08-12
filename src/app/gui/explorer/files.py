@@ -418,11 +418,19 @@ class FileExplorerWidget(QWidget):
                 self.text_view_window.show()
 
     def delete(self):
-        file_names = ', '.join(map(lambda f: f.name, self.files))
+        file_names = '\n'.join(map(lambda f: f.name, self.files))
+        count = len([f for f in self.files])
+        msg = "The following files will be delete:\n"
+        if count == 1:
+            msg += file_names
+        else:
+            msg += str(count) + " files"
+        msg += "\n"
+
         reply = QMessageBox.critical(
             self,
-            'Delete',
-            "Do you want to delete '%s'? It cannot be undone!" % file_names,
+            'Confirm Delete',
+            msg,
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
 
