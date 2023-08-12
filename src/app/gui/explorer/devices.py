@@ -3,10 +3,10 @@
 from typing import Any
 
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, QAbstractListModel, QModelIndex, QRect, QVariant, QSize
-from PyQt5.QtGui import QPalette, QPixmap, QMovie
+from PyQt5.QtCore import Qt, QAbstractListModel, QModelIndex, QRect, QVariant, QSize, pyqtSlot
+from PyQt5.QtGui import QPalette, QPixmap, QMovie, QKeySequence
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStyledItemDelegate, QStyleOptionViewItem, QApplication, \
-    QStyle, QListView
+    QStyle, QListView, QShortcut
 
 from app.core.resources import Resources
 from app.core.adb import Adb
@@ -119,6 +119,13 @@ class DeviceExplorerWidget(QWidget):
         self.main_layout.setStretch(self.layout().count() - 1, 1)
         self.main_layout.setStretch(self.layout().count() - 2, 1)
         self.setLayout(self.main_layout)
+
+        self.shortcut = QShortcut(QKeySequence('F5'), self)
+        self.shortcut.activated.connect(self.on_refresh)
+
+    @pyqtSlot()
+    def on_refresh(self):
+        self.update()
 
     def update(self):
         super(DeviceExplorerWidget, self).update()
