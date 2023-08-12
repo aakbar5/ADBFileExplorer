@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QPoint, QModelIndex, QAbstractListModel, QVariant, 
 from PyQt5.QtGui import QPixmap, QColor, QPalette, QMovie, QKeySequence
 from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QFileDialog, QStyle, QWidget, QStyledItemDelegate, \
     QStyleOptionViewItem, QApplication, QListView, QVBoxLayout, QLabel, QSizePolicy, QHBoxLayout, QTextEdit, \
-    QMainWindow
+    QMainWindow, QInputDialog
 
 from app.core.resources import Resources
 from app.core.settings import SettingsOptions, Settings
@@ -351,6 +351,22 @@ class FileExplorerWidget(QWidget):
         action_move.setDisabled(True)
         menu.addAction(action_move)
 
+        menu.addSeparator()
+
+        action_create_folder = QAction('Create folder', self)
+        action_create_folder.triggered.connect(self.__action_create_folder__)
+        menu.addAction(action_create_folder)
+
+        action_upload_directory = QAction('Upload directory', self)
+        action_upload_directory.triggered.connect(self.__action_upload_directory__)
+        menu.addAction(action_upload_directory)
+
+        action_upload_files = QAction('Upload files', self)
+        action_upload_files.triggered.connect(self.__action_upload_files__)
+        menu.addAction(action_upload_files)
+
+        menu.addSeparator()
+
         action_rename = QAction('Rename', self)
         action_rename.triggered.connect(self.rename)
         menu.addAction(action_rename)
@@ -363,13 +379,25 @@ class FileExplorerWidget(QWidget):
         action_delete.triggered.connect(self.delete)
         menu.addAction(action_delete)
 
+        menu.addSeparator()
+
         action_download = QAction('Download', self)
         action_download.triggered.connect(self.download_files)
         menu.addAction(action_download)
 
+        action_download_n_delete = QAction('Download n Delete', self)
+        action_download_n_delete.triggered.connect(self.download_n_delete_files)
+        menu.addAction(action_download_n_delete)
+
+        menu.addSeparator()
+
         action_download_to = QAction('Download to...', self)
         action_download_to.triggered.connect(self.download_to)
         menu.addAction(action_download_to)
+
+        action_download_to_n_delete = QAction('Download n Delete to...', self)
+        action_download_to_n_delete.triggered.connect(self.download_to_n_delete)
+        menu.addAction(action_download_to_n_delete)
 
         menu.addSeparator()
 
@@ -380,23 +408,32 @@ class FileExplorerWidget(QWidget):
         menu.exec(self.mapToGlobal(pos))
 
     @staticmethod
-    def default_response(data, error):
+    def show_notification(data, error, title_success, title_error):
         if error:
             Global().communicate.notification.emit(
                 MessageData(
-                    title='Download error',
-                    timeout=15000,
+                    title=title_error,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     body="<span style='color: red; font-weight: 600'> %s </span>" % error
                 )
             )
         if data:
             Global().communicate.notification.emit(
                 MessageData(
-                    title='Downloaded',
-                    timeout=15000,
+                    title=title_success,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     body=data
                 )
             )
+
+    @staticmethod
+    def default_download_response(data, error):
+        FileExplorerWidget.show_notification(data, error, 'Downloaded', 'Download error')
+
+    @staticmethod
+    def default_download_n_delete_response(data, error):
+        FileExplorerWidget.show_notification(data, error, 'Downloaded n Deleted', 'Download/Delete error')
+        Global.communicate.files_refresh.emit()
 
     def rename(self):
         self.list.edit(self.list.currentIndex())
@@ -409,7 +446,7 @@ class FileExplorerWidget(QWidget):
                 Global().communicate.notification.emit(
                     MessageData(
                         title='File',
-                        timeout=15000,
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         body="<span style='color: red; font-weight: 600'> %s </span>" % error
                     )
                 )
@@ -455,33 +492,51 @@ class FileExplorerWidget(QWidget):
                     )
             Global.communicate.files_refresh.emit()
 
-    def download_to(self):
+    def download_to(self, delete_too: bool = False):
         dir_name = QFileDialog.getExistingDirectory(self, 'Download to', '~')
         if dir_name:
-            self.download_files(dir_name)
+            self.download_files(dir_name, delete_too=delete_too)
 
-    def download_files(self, destination: str = None):
+    def download_files(self, destination: str = None, delete_too: bool = False):
+        callback = self.default_download_response
+        if delete_too:
+            callback = self.default_download_n_delete_response
+
         for file in self.files:
+            # Build title of the notification card
+            title = "Download "
+            if delete_too:
+                title += "& Delete "
+            title += ": " + file.name
+            print(f"download_files: {title} ->  {destination}")
+
+            # Setup job
             helper = ProgressCallbackHelper()
             worker = AsyncRepositoryWorker(
                 worker_id=self.DOWNLOAD_WORKER_ID,
-                name="Download",
+                name=title,
                 repository_method=FileRepository.download,
-                response_callback=self.default_response,
+                response_callback=callback,
                 arguments=(
-                    helper.progress_callback.emit, file.path, destination
+                    helper.progress_callback.emit, file, destination, delete_too
                 )
             )
             if Adb.worker().work(worker):
                 Global().communicate.notification.emit(
                     MessageData(
-                        title="Downloading to",
+                        title=title,
                         message_type=MessageType.LOADING_MESSAGE,
                         message_catcher=worker.set_loading_widget
                     )
                 )
                 helper.setup(worker, worker.update_loading_widget)
                 worker.start()
+
+    def download_n_delete_files(self, destination: str = None):
+        self.download_files(delete_too=True)
+
+    def download_to_n_delete(self):
+        self.download_to(delete_too=True)
 
     def file_properties(self):
         file, error = FileRepository.file(self.file.path)
@@ -490,7 +545,7 @@ class FileExplorerWidget(QWidget):
         if error:
             Global().communicate.notification.emit(
                 MessageData(
-                    timeout=10000,
+                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Opening folder",
                     body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                 )
@@ -517,6 +572,45 @@ class FileExplorerWidget(QWidget):
         properties.setInformativeText(info)
         properties.exec_()
 
+    # TODO: Duplicate function; think of having one copy
+    def __action_upload_files__(self):
+        file_names = QFileDialog.getOpenFileNames(self, 'Select files', '~')[0]
+
+        if file_names:
+            self.uploader.setup(file_names)
+            self.uploader.upload()
+
+    # TODO: Duplicate function; think of having one copy
+    def __action_upload_directory__(self):
+        dir_name = QFileDialog.getExistingDirectory(self, 'Select directory', '~')
+
+        if dir_name:
+            self.uploader.setup([dir_name])
+            self.uploader.upload()
+
+    # TODO: Duplicate function; think of having one copy
+    def __action_create_folder__(self):
+        text, ok = QInputDialog.getText(self, 'New folder', 'Enter new folder name:')
+
+        if ok and text:
+            data, error = FileRepository.new_folder(text)
+            if error:
+                Global().communicate.notification.emit(
+                    MessageData(
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
+                        title="Creating folder",
+                        body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                    )
+                )
+            if data:
+                Global().communicate.notification.emit(
+                    MessageData(
+                        title="Creating folder",
+                        timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
+                        body=data,
+                    )
+                )
+            Global().communicate.files_refresh.emit()
 
 class TextView(QMainWindow):
     def __init__(self, filename, data):

@@ -102,17 +102,21 @@ class FileRepository:
                 self.messages.append(data)
 
     @classmethod
-    def download(cls, progress_callback: callable, source: str, destination: str) -> Tuple[str, str]:
+    def download(cls, progress_callback: callable, source: File, destination: str, delete_too: bool = False) -> Tuple[str, str]:
         if not destination:
             destination = Settings.get_value(SettingsOptions.DOWNLOAD_PATH, ADBManager.get_device())
 
         if ADBManager.get_device() and source and destination:
             helper = cls.UpDownHelper(progress_callback)
-            response = adb_helper.pull(ADBManager.get_device().id, source, destination, helper.call)
+            response = adb_helper.pull(ADBManager.get_device().id, source.path, destination, helper.call)
+
             if not response.IsSuccessful:
                 return None, response.ErrorData or "\n".join(helper.messages)
-
-            return "\n".join(helper.messages), response.ErrorData
+            else:
+                if delete_too == True:
+                    return cls.delete(source)
+                else:
+                    return "\n".join(helper.messages), response.ErrorData
         return None, None
 
     @classmethod

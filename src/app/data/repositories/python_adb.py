@@ -158,7 +158,7 @@ class FileRepository:
             self.callback(path, int(self.written / self.total * 100))
 
     @classmethod
-    def download(cls, progress_callback: callable, source: str, destination: str = None) -> Tuple[str, str]:
+    def download(cls, progress_callback: callable, source: File, destination: str = None, delete_too: bool = False) -> Tuple[str, str]:
         if not destination:
             destination = Settings.device_downloads_path(PythonADBManager.get_device())
 
@@ -167,7 +167,7 @@ class FileRepository:
         if PythonADBManager.device and PythonADBManager.device.available and source:
             try:
                 PythonADBManager.device.pull(
-                    device_path=source,
+                    device_path=source.path,
                     local_path=destination,
                     progress_callback=helper.call
                 )
