@@ -33,7 +33,7 @@ class FileRepository:
             )
 
             if file.type == FileType.LINK:
-                args = ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ') + '/']
+                args = ShellCommand.LS_LIST_DIRS + [shlex.quote(path) + '/']
                 response = PythonADBManager.device.shell(shlex.join(args))
                 file.link_type = FileType.UNKNOWN
                 if response and response.startswith('d'):
@@ -59,7 +59,7 @@ class FileRepository:
             path = PythonADBManager.path()
             response = PythonADBManager.device.list(path)
 
-            args = ShellCommand.LS_ALL_DIRS + [path.replace(' ', r'\ ') + "*/"]
+            args = ShellCommand.LS_ALL_DIRS + [shlex.quote(path) + "*/"]
             dirs = PythonADBManager.device.shell(" ".join(args)).split()
 
             for file in response:
@@ -116,7 +116,7 @@ class FileRepository:
         if not PythonADBManager.device.available:
             return None, "Device not available!"
         try:
-            args = [ShellCommand.CAT, file.path.replace(' ', r'\ ')]
+            args = [ShellCommand.CAT, shlex.quote(file.path)]
             if file.isdir:
                 return None, "Can't open. %s is a directory" % file.path
             response = PythonADBManager.device.shell(shlex.join(args))

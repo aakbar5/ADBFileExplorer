@@ -1,6 +1,7 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
 from typing import List, Tuple
+import shlex
 
 from app.core.settings import SettingsOptions, Settings
 from app.core.managers import ADBManager
@@ -16,7 +17,7 @@ class FileRepository:
             return None, "No device selected!"
 
         path = ADBManager.set_path(path)
-        args = adb_helper.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ')]
+        args = adb_helper.ShellCommand.LS_LIST_DIRS + [shlex.quote(path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
@@ -26,7 +27,7 @@ class FileRepository:
             return None, "Unexpected string:\n%s" % response.OutputData
 
         if file.type == FileType.LINK:
-            args = adb_helper.ShellCommand.LS_LIST_DIRS + [path.replace(' ', r'\ ') + '/']
+            args = adb_helper.ShellCommand.LS_LIST_DIRS + [shlex.quote(path) + '/']
             response = adb_helper.shell(ADBManager.get_device().id, args)
             file.link_type = FileType.UNKNOWN
             if response.OutputData and response.OutputData.startswith('d'):
@@ -42,7 +43,7 @@ class FileRepository:
             return None, "No device selected!"
 
         path = ADBManager.path()
-        args = adb_helper.ShellCommand.LS_ALL_LIST + [path.replace(' ', r'\ ')]
+        args = adb_helper.ShellCommand.LS_ALL_LIST + [shlex.quote(path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful and response.ExitCode != 1:
             return [], response.ErrorData or response.OutputData
@@ -50,7 +51,7 @@ class FileRepository:
         if not response.OutputData:
             return [], response.ErrorData
 
-        args = adb_helper.ShellCommand.LS_ALL_DIRS + [path.replace(' ', r'\ ') + "*/"]
+        args = adb_helper.ShellCommand.LS_ALL_DIRS + [shlex.quote(path) + "*/"]
         response_dirs = adb_helper.shell(ADBManager.get_device().id, args)
         if not response_dirs.IsSuccessful and response_dirs.ExitCode != 1:
             return [], response_dirs.ErrorData or response_dirs.OutputData
@@ -63,13 +64,13 @@ class FileRepository:
     def rename(cls, file: File, name) -> Tuple[str, str]:
         if name.__contains__('/') or name.__contains__('\\'):
             return None, "Invalid name"
-        args = [adb_helper.ShellCommand.MV, file.path.replace(' ', r'\ '), (file.location + name).replace(' ', r'\ ')]
+        args = [adb_helper.ShellCommand.MV, shlex.quote(file.path), shlex.quote(file.location + name)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         return None, response.ErrorData or response.OutputData
 
     @classmethod
     def open_file(cls, file: File) -> Tuple[str, str]:
-        args = [adb_helper.ShellCommand.CAT, file.path.replace(' ', r'\ ')]
+        args = [adb_helper.ShellCommand.CAT, shlex.quote(file.path)]
         if file.isdir:
             return None, "Can't open. %s is a directory" % file.path
         response = adb_helper.shell(ADBManager.get_device().id, args)
@@ -79,9 +80,9 @@ class FileRepository:
 
     @classmethod
     def delete(cls, file: File) -> Tuple[str, str]:
-        args = [adb_helper.ShellCommand.RM, file.path.replace(' ', r'\ ')]
+        args = [adb_helper.ShellCommand.RM, shlex.quote(file.path)]
         if file.isdir:
-            args = adb_helper.ShellCommand.RM_DIR_FORCE + [file.path.replace(' ', r'\ ')]
+            args = adb_helper.ShellCommand.RM_DIR_FORCE + [shlex.quote(file.path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful or response.OutputData:
             return None, response.ErrorData or response.OutputData
