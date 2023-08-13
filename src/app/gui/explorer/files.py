@@ -1,6 +1,7 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
 import sys
+import os
 from typing import Any
 
 from PyQt5 import QtCore, QtGui
@@ -229,6 +230,9 @@ class FileExplorerWidget(QWidget):
 
     def __init__(self, parent=None):
         super(FileExplorerWidget, self).__init__(parent)
+        self.setAcceptDrops(True)
+        self.uploader = UploadTools.FilesUploader()
+
         self.main_layout = QVBoxLayout(self)
 
         self.toolbar = FileExplorerToolbar(self)
@@ -270,6 +274,21 @@ class FileExplorerWidget(QWidget):
         self.setLayout(self.main_layout)
 
         Global().communicate.files_refresh.connect(self.update)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        drag_objects = [u.toLocalFile() for u in event.mimeData().urls()]
+        for obj in drag_objects:
+            if os.path.isdir(obj) or os.path.isfile(obj):
+                self.uploader.setup([obj])
+                self.uploader.upload()
+            else:
+                print(f"Drag object is not file or folder")
 
     @property
     def file(self):
