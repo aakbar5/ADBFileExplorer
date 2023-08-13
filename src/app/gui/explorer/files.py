@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QPoint, QModelIndex, QAbstractListModel, QVariant, 
 from PyQt5.QtGui import QPixmap, QColor, QPalette, QMovie, QKeySequence
 from PyQt5.QtWidgets import QMenu, QAction, QMessageBox, QFileDialog, QStyle, QWidget, QStyledItemDelegate, \
     QStyleOptionViewItem, QApplication, QListView, QVBoxLayout, QLabel, QSizePolicy, QHBoxLayout, QTextEdit, \
-    QMainWindow, QInputDialog
+    QMainWindow, QInputDialog, QShortcut
 
 from app.core.resources import Resources
 from app.core.settings import SettingsOptions, Settings
@@ -248,12 +248,16 @@ class FileExplorerWidget(QWidget):
         self.list.setModel(self.model)
         self.list.installEventFilter(self)
         self.list.doubleClicked.connect(self.open)
+        self.list.clicked.connect(self.onClicked)
         self.list.setItemDelegate(FileItemDelegate(self.list))
         self.list.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.context_menu)
         self.list.setStyleSheet(read_string_from_file(Resources.style_file_list))
         self.list.setSelectionMode(QListView.SelectionMode.ExtendedSelection)
         self.layout().addWidget(self.list)
+
+        self.deleteKey = QShortcut(QtCore.Qt.Key_Delete, self.list)
+        self.deleteKey.activated.connect(self.onDeleteKey)
 
         self.loading = QLabel(self)
         self.loading.setAlignment(Qt.AlignCenter)
@@ -274,6 +278,14 @@ class FileExplorerWidget(QWidget):
         self.setLayout(self.main_layout)
 
         Global().communicate.files_refresh.connect(self.update)
+
+    def onClicked(self):
+        print(f"onClicked: list (Focus={self.list.hasFocus()})")
+
+    def onDeleteKey(self):
+        print(f"onDeleteKey: list (Focus={self.list.hasFocus()})")
+        if self.list.hasFocus():
+            self.delete()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
