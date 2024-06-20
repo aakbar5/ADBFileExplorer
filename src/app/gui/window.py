@@ -14,7 +14,7 @@ from app.gui.explorer.preference import PerferenceDialog
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
-from app.gui.explorer.statusbar import DeviceLabelWidget
+from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget
 
 class MenuBar(QMenuBar):
     CONNECT_WORKER_ID = 100
@@ -175,6 +175,9 @@ class MainWindow(QMainWindow):
         self.status_bar = self.statusBar()
         self.status_bar_device_label = DeviceLabelWidget()
         self.status_bar.addPermanentWidget(self.status_bar_device_label)
+
+        self.status_bar_android_version = AndroidVersionWidget()
+        self.status_bar.addPermanentWidget(self.status_bar_android_version)
 
         # Show Devices Widget
         Global().communicate.devices.emit()

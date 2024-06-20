@@ -19,7 +19,7 @@ from app.data.models import FileType, MessageData, MessageType
 from app.data.repositories import FileRepository
 from app.gui.explorer.toolbar import ParentButton, UploadTools, PathBar, HomeButton, RefreshButton
 from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper, read_string_from_file
-
+from app.gui.explorer.statusbar import DeviceStatusThread
 
 class FileHeaderWidget(QWidget):
     def __init__(self, parent=None):
@@ -283,6 +283,9 @@ class FileExplorerWidget(QWidget):
         device_name = Adb.manager().get_device().name
         Global().communicate.status_bar_device_label.emit(device_name)
 
+        self.device_status_thread = DeviceStatusThread()
+        self.device_status_thread.start()
+
     def onClicked(self):
         print(f"onClicked: list (Focus={self.list.hasFocus()})")
 
@@ -338,10 +341,11 @@ class FileExplorerWidget(QWidget):
             Global().communicate.path_toolbar_refresh.emit()
 
     def app_close(self):
+        self.device_status_thread.stop()
         Global().communicate.files_refresh.disconnect()
 
     def close(self) -> bool:
-        Global().communicate.files_refresh.disconnect()
+        self.app_close()
         return super(FileExplorerWidget, self).close()
 
     def _async_response(self, files: list, error: str):

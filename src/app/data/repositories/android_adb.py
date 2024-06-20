@@ -12,6 +12,20 @@ from app.services import adb_helper
 
 class FileRepository:
     @classmethod
+    def AndroidVersion(cls) -> Tuple[str, str]:
+        # print(f"android_adb: AndroidVersion")
+
+        if not ADBManager.get_device():
+            return None, "No device selected!"
+
+        args = ['getprop', 'ro.build.version.release']
+        response = adb_helper.shell(ADBManager.get_device().id, args)
+        if not response.IsSuccessful:
+            return None, response.ErrorData or response.OutputData
+
+        return response.OutputData, None
+
+    @classmethod
     def file(cls, path: str) -> Tuple[File, str]:
         if not ADBManager.get_device():
             return None, "No device selected!"

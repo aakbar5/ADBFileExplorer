@@ -37,3 +37,4 @@ class Resources:
 
     # Icons for status bar
     icon_tag = resource_filename('resources.icons', 'tag.svg')
+    icon_android = resource_filename('resources.icons', 'android.svg')

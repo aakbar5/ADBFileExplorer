@@ -17,6 +17,14 @@ from app.services.adb_helper import ShellCommand
 
 class FileRepository:
     @classmethod
+    def AndroidVersion(cls) -> Tuple[str, str]:
+        if not PythonADBManager.device:
+            return None, "No device selected!"
+        if not PythonADBManager.device.available:
+            return None, "Device not available!"
+        return "TODO", "None"
+
+    @classmethod
     def file(cls, path: str) -> Tuple[File, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
