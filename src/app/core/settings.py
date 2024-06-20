@@ -5,8 +5,7 @@ import os
 from PyQt5.QtCore import QSettings
 from PyQt5.QtCore import QSettings, QPoint, QSize
 
-from app.helpers.tools import Singleton
-from app.data.models import Device
+from app.helpers.singleton import Singleton
 
 class SettingsOptions:
     ADB_PATH = 'adb_path'

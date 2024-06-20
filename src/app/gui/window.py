@@ -14,7 +14,7 @@ from app.gui.explorer.preference import PerferenceDialog
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
-
+from app.gui.explorer.statusbar import DeviceLabelWidget
 
 class MenuBar(QMenuBar):
     CONNECT_WORKER_ID = 100
@@ -89,12 +89,12 @@ class MenuBar(QMenuBar):
                     message_catcher=worker.set_loading_widget
                 )
             )
-            Global().communicate.status_bar.emit('Operation: %s... Please wait.' % worker.name, 3000)
+            Global().communicate.status_bar_general.emit('Operation: %s... Please wait.' % worker.name, 3000)
             worker.start()
 
     def connect_device(self):
         text, ok = QInputDialog.getText(self, 'Connect Device', 'Enter device IP:')
-        Global().communicate.status_bar.emit('Operation: Connecting canceled.', 3000)
+        Global().communicate.status_bar_general.emit('Operation: Connecting canceled.', 3000)
 
         if ok and text:
             worker = AsyncRepositoryWorker(
@@ -113,7 +113,7 @@ class MenuBar(QMenuBar):
                         message_catcher=worker.set_loading_widget
                     )
                 )
-                Global().communicate.status_bar.emit('Operation: %s... Please wait.' % worker.name, 3000)
+                Global().communicate.status_bar_general.emit('Operation: %s... Please wait.' % worker.name, 3000)
                 worker.start()
 
     @staticmethod
@@ -136,7 +136,7 @@ class MenuBar(QMenuBar):
                     body="<span style='color: red; font-weight: 600'></span>" % error
                 )
             )
-        Global().communicate.status_bar.emit('Operation: Disconnecting finished.', 3000)
+        Global().communicate.status_bar_general.emit('Operation: Disconnecting finished.', 3000)
 
     @staticmethod
     def __async_response_connect(data, error):
@@ -155,7 +155,7 @@ class MenuBar(QMenuBar):
                     body="<span style='color: red; font-weight: 600'>%s</span>" % error
                 )
             )
-        Global().communicate.status_bar.emit('Operation: Connecting to device finished.', 3000)
+        Global().communicate.status_bar_general.emit('Operation: Connecting to device finished.', 3000)
 
 
 class MainWindow(QMainWindow):
@@ -172,11 +172,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('ADB File Explorer')
         self.setWindowIcon(QIcon(Resources.icon_logo))
 
+        self.status_bar = self.statusBar()
+        self.status_bar_device_label = DeviceLabelWidget()
+        self.status_bar.addPermanentWidget(self.status_bar_device_label)
+
         # Show Devices Widget
         Global().communicate.devices.emit()
 
         # Connect to Global class to use it anywhere
-        Global().communicate.status_bar.connect(self.statusBar().showMessage)
+        Global().communicate.status_bar_general.connect(self.status_bar.showMessage)
 
         # Important to add last to stay on top!
         self.notification_center = NotificationCenter(self)
@@ -189,7 +193,7 @@ class MainWindow(QMainWindow):
                         "Current selected core: <strong>%s</strong><br/>" \
                         "To change it - <code style='color: blue'>settings.json</code> file" % Settings.get_value(SettingsOptions.ADB_CORE)
 
-        Global().communicate.status_bar.emit('Ready', 5000)
+        Global().communicate.status_bar_general.emit('Ready', 5000)
 
         if Settings.get_value(SettingsOptions.SHOW_WELCOME_MSG):
             Global().communicate.notification.emit(MessageData(title=welcome_title, body=welcome_body, timeout=30000))
@@ -205,6 +209,8 @@ class MainWindow(QMainWindow):
             data.message_catcher(message)
 
     def closeEvent(self, event):
+        Global().communicate.app_close.emit()
+
         Settings.set_value("win_size", self.size())
         Settings.set_value("win_pos", self.pos())
 

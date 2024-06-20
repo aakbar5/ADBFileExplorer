@@ -278,6 +278,10 @@ class FileExplorerWidget(QWidget):
         self.setLayout(self.main_layout)
 
         Global().communicate.files_refresh.connect(self.update)
+        Global().communicate.app_close.connect(self.app_close)
+
+        device_name = Adb.manager().get_device().name
+        Global().communicate.status_bar_device_label.emit(device_name)
 
     def onClicked(self):
         print(f"onClicked: list (Focus={self.list.hasFocus()})")
@@ -332,6 +336,9 @@ class FileExplorerWidget(QWidget):
             # Then start async worker
             worker.start()
             Global().communicate.path_toolbar_refresh.emit()
+
+    def app_close(self):
+        Global().communicate.files_refresh.disconnect()
 
     def close(self) -> bool:
         Global().communicate.files_refresh.disconnect()

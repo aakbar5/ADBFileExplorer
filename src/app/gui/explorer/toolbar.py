@@ -160,20 +160,20 @@ class PathBar(QWidget):
         super(PathBar, self).__init__(parent)
         self.setLayout(QHBoxLayout(self))
 
-        device_name = Adb.manager().get_device().name
+        # Reterive old path
         device_id = Adb.manager().get_device().id
         device_path = Adb.manager().path()
         old_device_path = Settings.get_value(f"{device_id}/path")
         if old_device_path:
             device_path = old_device_path
 
-        self.prefix = device_name + ":"
-        self.value = device_path
+        self.device_path = device_path
 
+        # setup text line
         self.text = QLineEdit(self)
         self.text.installEventFilter(self)
         self.text.setStyleSheet("padding: 5;")
-        self.text.setText(self.prefix + self.value)
+        self.text.setText(self.device_path)
         self.text.textEdited.connect(self._update)
         self.text.returnPressed.connect(self._action)
         self.layout().addWidget(self.text)
@@ -195,21 +195,21 @@ class PathBar(QWidget):
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         if obj == self.text and event.type() == QEvent.FocusIn:
-            self.text.setText(self.value)
+            self.text.setText(self.device_path)
         elif obj == self.text and event.type() == QEvent.FocusOut:
-            self.text.setText(self.prefix + self.value)
+            self.text.setText(self.device_path)
         return super(PathBar, self).eventFilter(obj, event)
 
     def _clear(self):
-        self.value = Adb.manager().path()
-        self.text.setText(self.prefix + self.value)
+        self.device_path = Adb.manager().path()
+        self.text.setText(self.device_path)
 
     def _update(self, text: str):
-        self.value = text
+        self.device_path = text
 
     def _action(self):
         self.text.clearFocus()
-        file, error = FileRepository.file(self.value)
+        file, error = FileRepository.file(self.device_path)
         if error:
             Global().communicate.path_toolbar_refresh.emit()
             Global().communicate.notification.emit(

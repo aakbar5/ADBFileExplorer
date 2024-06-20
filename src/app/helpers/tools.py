@@ -95,6 +95,8 @@ class ProgressCallbackHelper(QObject):
 
 
 class Communicate(QObject):
+    app_close = QtCore.pyqtSignal()
+
     files = QtCore.pyqtSignal()
     devices = QtCore.pyqtSignal()
 
@@ -102,18 +104,9 @@ class Communicate(QObject):
     files_refresh = QtCore.pyqtSignal()
     path_toolbar_refresh = QtCore.pyqtSignal()
 
-    status_bar = QtCore.pyqtSignal(str, int)  # Message, Duration
     notification = QtCore.pyqtSignal(MessageData)
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
+    status_bar_general = QtCore.pyqtSignal(str, int)  # Message, Duration
+    status_bar_device_label = QtCore.pyqtSignal(str)  # Message
 
 def get_python_rsa_keys_signer(rerun=True) -> PythonRSASigner:
     privkey = os.path.expanduser('~/.android/adbkey')

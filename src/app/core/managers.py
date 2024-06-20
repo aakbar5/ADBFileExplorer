@@ -7,7 +7,8 @@ from PyQt5.QtCore import QObject
 from adb_shell.adb_device import AdbDeviceTcp, AdbDeviceUsb
 
 from app.data.models import File, Device
-from app.helpers.tools import Communicate, Singleton, get_python_rsa_keys_signer, AsyncRepositoryWorker
+from app.helpers.tools import Communicate, get_python_rsa_keys_signer, AsyncRepositoryWorker
+from app.helpers.singleton import Singleton
 
 
 class ADBManager:
