@@ -19,7 +19,7 @@ class UploadTools(QToolButton):
         self.menu = QMenu(self)
         self.uploader = self.FilesUploader()
 
-        self.show_action = QAction(QIcon(Resources.icon_plus), 'Upload', self)
+        self.show_action = QAction(QIcon(Resources.icon_upload), 'Upload', self)
         self.show_action.triggered.connect(self.showMenu)
         self.setDefaultAction(self.show_action)
 
@@ -175,15 +175,15 @@ class PathBar(QWidget):
         self.text.setStyleSheet("padding: 5;")
         self.text.setText(self.device_path)
         self.text.textEdited.connect(self._update)
-        self.text.returnPressed.connect(self._action)
+        self.text.returnPressed.connect(self._open_action)
         self.layout().addWidget(self.text)
 
-        self.go = QToolButton(self)
-        self.go.setStyleSheet("padding: 4;")
-        self.action = QAction(QIcon(Resources.icon_arrow), 'Go', self)
-        self.action.triggered.connect(self._action)
-        self.go.setDefaultAction(self.action)
-        self.layout().addWidget(self.go)
+        self.open = QToolButton(self)
+        self.open.setStyleSheet("padding: 4;")
+        self.open_action = QAction(QIcon(Resources.icon_open), 'Open folder', self)
+        self.open_action.triggered.connect(self._open_action)
+        self.open.setDefaultAction(self.open_action)
+        self.layout().addWidget(self.open)
 
         self.layout().setContentsMargins(0, 0, 0, 0)
         Global().communicate.path_toolbar_refresh.connect(self._clear)
@@ -191,7 +191,7 @@ class PathBar(QWidget):
         # If old path is available,
         # update gui to move to different folder
         if old_device_path:
-            self._action()
+            self._open_action()
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         if obj == self.text and event.type() == QEvent.FocusIn:
@@ -207,7 +207,7 @@ class PathBar(QWidget):
     def _update(self, text: str):
         self.device_path = text
 
-    def _action(self):
+    def _open_action(self):
         self.text.clearFocus()
         file, error = FileRepository.file(self.device_path)
         if error:
