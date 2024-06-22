@@ -9,6 +9,13 @@ from app.data.repositories import android_adb, python_adb
 
 class FileRepository:
     @classmethod
+    def IsAndroidRoot(cls) -> Tuple[str, str]:
+        if Adb.core == Adb.PYTHON_ADB_SHELL:
+            return python_adb.FileRepository.IsAndroidRoot()
+        elif Adb.core == Adb.EXTERNAL_TOOL_ADB:
+            return android_adb.FileRepository.IsAndroidRoot()
+
+    @classmethod
     def AndroidVersion(cls) -> Tuple[str, str]:
         if Adb.core == Adb.PYTHON_ADB_SHELL:
             return python_adb.FileRepository.AndroidVersion()

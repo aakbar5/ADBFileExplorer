@@ -11,6 +11,45 @@ from app.data.repositories import FileRepository
 from app.core.resources import Resources
 from app.core.managers import Global
 
+class IsAndroidRootWidget(QWidget):
+    IconSize = QSize(16, 16)
+    HorizontalSpacing = 2
+
+    def __init__(self, final_stretch=False):
+        super(QWidget, self).__init__()
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self.IconLock = QIcon(Resources.icon_lock).pixmap(self.IconSize)
+        self.IconUnlock = QIcon(Resources.icon_unlock).pixmap(self.IconSize)
+
+        self.icon = QLabel()
+        self.icon.setVisible(False)
+        layout.addWidget(self.icon)
+        layout.addSpacing(self.HorizontalSpacing)
+
+        self.text_widget = QLabel("")
+        layout.addWidget(self.text_widget)
+
+        if final_stretch:
+            layout.addStretch()
+
+        Global().communicate.status_bar_is_root.connect(self.update_text)
+
+    def update_text(self, integer):
+        text = "User"
+        icon = self.IconLock
+
+        if integer == 0:
+            text = "Root"
+            icon = self.IconUnlock
+
+        self.icon.setPixmap(icon)
+        self.icon.setVisible(True)
+        self.text_widget.setText(text)
+
 class AndroidVersionWidget(QWidget):
     IconResource = Resources.icon_android
     IconSize = QSize(16, 16)
@@ -98,6 +137,9 @@ class DeviceStatusThread(threading.Thread, QObject):
             if data:
                 lines = data.splitlines()
             Global().communicate.status_bar_android_version.emit(lines[0])
+
+            data, _ = FileRepository.IsAndroidRoot()
+            Global().communicate.status_bar_is_root.emit(data)
 
             self._stop_event.wait(self._delay)
 

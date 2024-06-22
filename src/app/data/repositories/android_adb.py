@@ -12,6 +12,21 @@ from app.services import adb_helper
 
 class FileRepository:
     @classmethod
+    def IsAndroidRoot(cls) -> Tuple[str, str]:
+        # print(f"android_adb: IsAndroidRoot")
+
+        if not ADBManager.get_device():
+            return None, "No device selected!"
+
+        args = ['id']
+        response = adb_helper.shell(ADBManager.get_device().id, args)
+        if not response.IsSuccessful:
+            return None, response.ErrorData or response.OutputData
+
+        is_root = response.OutputData.find("uid=0(root)")
+        return is_root, None
+
+    @classmethod
     def AndroidVersion(cls) -> Tuple[str, str]:
         # print(f"android_adb: AndroidVersion")
 
