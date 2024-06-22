@@ -109,6 +109,7 @@ class Communicate(QObject):
     status_bar_device_label = QtCore.pyqtSignal(str)  # Message
     status_bar_android_version = QtCore.pyqtSignal(str)  # Message
     status_bar_is_root = QtCore.pyqtSignal(int)  # int
+    status_bar_battery_level = QtCore.pyqtSignal(str, str)  # Message
 
 def get_python_rsa_keys_signer(rerun=True) -> PythonRSASigner:
     privkey = os.path.expanduser('~/.android/adbkey')

@@ -9,6 +9,13 @@ from app.data.repositories import android_adb, python_adb
 
 class FileRepository:
     @classmethod
+    def DeviceBatteryLevel(cls) -> Tuple[str, str]:
+        if Adb.core == Adb.PYTHON_ADB_SHELL:
+            return python_adb.FileRepository.DeviceBatteryLevel()
+        elif Adb.core == Adb.EXTERNAL_TOOL_ADB:
+            return android_adb.FileRepository.DeviceBatteryLevel()
+
+    @classmethod
     def IsAndroidRoot(cls) -> Tuple[str, str]:
         if Adb.core == Adb.PYTHON_ADB_SHELL:
             return python_adb.FileRepository.IsAndroidRoot()

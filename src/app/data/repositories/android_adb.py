@@ -12,6 +12,25 @@ from app.services import adb_helper
 
 class FileRepository:
     @classmethod
+    def DeviceBatteryLevel(cls) -> Tuple[str, str]:
+        # print(f"android_adb: DeviceBatteryLevel")
+
+        if not ADBManager.get_device():
+            return None, "No device selected!"
+
+        args = ['cmd', 'battery', 'get', 'level']
+        response_level = adb_helper.shell(ADBManager.get_device().id, args)
+        if not response_level.IsSuccessful:
+            return None, response_level.ErrorData or response_level.OutputData
+
+        args = ['cmd', 'battery', 'get', 'status']
+        response_status = adb_helper.shell(ADBManager.get_device().id, args)
+        if not response_status.IsSuccessful:
+            return None, response_status.ErrorData or response_status.OutputData
+
+        return response_level.OutputData, response_status.OutputData
+
+    @classmethod
     def IsAndroidRoot(cls) -> Tuple[str, str]:
         # print(f"android_adb: IsAndroidRoot")
 

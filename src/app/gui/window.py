@@ -14,7 +14,7 @@ from app.gui.explorer.preference import PerferenceDialog
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
-from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, IsAndroidRootWidget
+from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, IsAndroidRootWidget, AndroidBatteryWidget
 
 class MenuBar(QMenuBar):
     CONNECT_WORKER_ID = 100
@@ -178,6 +178,9 @@ class MainWindow(QMainWindow):
 
         self.status_bar_android_version = AndroidVersionWidget()
         self.status_bar.addPermanentWidget(self.status_bar_android_version)
+
+        self.status_bar_battery = AndroidBatteryWidget()
+        self.status_bar.addPermanentWidget(self.status_bar_battery)
 
         self.status_bar_root = IsAndroidRootWidget()
         self.status_bar.addPermanentWidget(self.status_bar_root)

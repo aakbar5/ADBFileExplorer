@@ -280,9 +280,21 @@ class FileExplorerWidget(QWidget):
         Global().communicate.files_refresh.connect(self.update)
         Global().communicate.app_close.connect(self.app_close)
 
+        # Emit device lable for status bar
         device_name = Adb.manager().get_device().name
         Global().communicate.status_bar_device_label.emit(device_name)
 
+        # Emit Android version for status bar
+        data, _ = FileRepository.AndroidVersion()
+        if data:
+            lines = data.splitlines()
+        Global().communicate.status_bar_android_version.emit(lines[0])
+
+        # Emit Android root/unroot status for status bar
+        data, _ = FileRepository.IsAndroidRoot()
+        Global().communicate.status_bar_is_root.emit(data)
+
+        # Setup thread to monitor device
         self.device_status_thread = DeviceStatusThread()
         self.device_status_thread.start()
 
