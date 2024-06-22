@@ -128,7 +128,7 @@ class HomeButton(QToolButton):
         super(HomeButton, self).__init__(parent)
         self.action = QAction(QIcon(Resources.icon_home), 'Home', self)
         self.action.triggered.connect(
-            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().clear_path() else ''
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_home() else ''
         )
         self.setDefaultAction(self.action)
 
@@ -144,16 +144,35 @@ class RefreshButton(QToolButton):
         self.setDefaultAction(self.action)
 
 
-class ParentButton(QToolButton):
+class UpButton(QToolButton):
     def __init__(self, parent):
-        super(ParentButton, self).__init__(parent)
-        self.action = QAction(QIcon(Resources.icon_up), 'Parent', self)
+        super(UpButton, self).__init__(parent)
+        self.action = QAction(QIcon(Resources.icon_up), 'Up directory', self)
         self.action.setShortcut('Escape')
         self.action.triggered.connect(
-            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().up() else ''
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_up() else ''
         )
         self.setDefaultAction(self.action)
 
+
+class BackButton(QToolButton):
+    def __init__(self, parent):
+        super(BackButton, self).__init__(parent)
+        self.action = QAction(QIcon(Resources.icon_back), 'Back directory', self)
+        self.action.triggered.connect(
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_back() else ''
+        )
+        self.setDefaultAction(self.action)
+
+
+class ForwardButton(QToolButton):
+    def __init__(self, parent):
+        super(ForwardButton, self).__init__(parent)
+        self.action = QAction(QIcon(Resources.icon_forward), 'Forward directory', self)
+        self.action.triggered.connect(
+            lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_forward() else ''
+        )
+        self.setDefaultAction(self.action)
 
 class PathBar(QWidget):
     def __init__(self, parent: QWidget):
@@ -162,7 +181,7 @@ class PathBar(QWidget):
 
         # Reterive old path
         device_id = Adb.manager().get_device().id
-        device_path = Adb.manager().path()
+        device_path = Adb.manager().get_current_path()
         old_device_path = Settings.get_value(f"{device_id}/path")
         if old_device_path:
             device_path = old_device_path
@@ -185,6 +204,18 @@ class PathBar(QWidget):
         self.open.setDefaultAction(self.open_action)
         self.layout().addWidget(self.open)
 
+        self.history_menu = QMenu(self)
+        self.history_menu.aboutToShow.connect(self._history_menu_populate)
+        self.history_menu.triggered.connect(self._history_menu_action)
+
+        self.history = QToolButton(self)
+        self.history.setStyleSheet("padding: 4;")
+        self.history_show_action = QAction(QIcon(Resources.icon_history), 'History', self)
+        self.history_show_action.triggered.connect(self.history.showMenu)
+        self.history.setDefaultAction(self.history_show_action)
+        self.history.setMenu(self.history_menu)
+        self.layout().addWidget(self.history)
+
         self.layout().setContentsMargins(0, 0, 0, 0)
         Global().communicate.path_toolbar_refresh.connect(self._clear)
 
@@ -201,11 +232,21 @@ class PathBar(QWidget):
         return super(PathBar, self).eventFilter(obj, event)
 
     def _clear(self):
-        self.device_path = Adb.manager().path()
+        self.device_path = Adb.manager().get_current_path()
         self.text.setText(self.device_path)
 
     def _update(self, text: str):
         self.device_path = text
+
+    def _history_menu_populate(self):
+        self.history_menu.clear()
+        for path in Adb.manager().get_all_paths():
+            path_action = self.history_menu.addAction(QIcon(Resources.icon_path_fork), path)
+            path_action.setData(path)
+
+    def _history_menu_action(self, action):
+        self.device_path = action.data()
+        self._open_action()
 
     def _open_action(self):
         self.text.clearFocus()
@@ -219,7 +260,7 @@ class PathBar(QWidget):
                     body="<span style='color: red; font-weight: 600'> %s </span>" % error,
                 )
             )
-        elif file and Adb.manager().go(file):
+        elif file and Adb.manager().set_current_path(file):
             Global().communicate.files_refresh.emit()
         else:
             Global().communicate.path_toolbar_refresh.emit()

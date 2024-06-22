@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
 
         if Adb.manager().get_device():
             device_name = Adb.manager().get_device().name
-            device_path = Adb.manager().path()
+            device_path = Adb.manager().get_current_path()
             device_id = Adb.manager().get_device().id
             device_type = Adb.manager().get_device().type
             print(f"Device name: {device_name}")

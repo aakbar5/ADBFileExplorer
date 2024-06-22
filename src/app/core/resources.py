@@ -18,11 +18,17 @@ class Resources:
     icon_close = resource_filename('resources.icons', 'close.svg')
     icon_phone = resource_filename('resources.icons', 'phone.svg')
     icon_phone_unknown = resource_filename('resources.icons', 'phone_unknown.svg')
+
+    icon_back = resource_filename('resources.icons.toolbar', 'back.svg')
+    icon_forward = resource_filename('resources.icons.toolbar', 'forward.svg')
+    icon_history = resource_filename('resources.icons.toolbar', 'history.svg')
     icon_home = resource_filename('resources.icons.toolbar', 'home.svg')
+    icon_open = resource_filename('resources.icons.toolbar', 'open.svg')
     icon_refresh = resource_filename('resources.icons.toolbar', 'refresh.svg')
     icon_upload = resource_filename('resources.icons.toolbar', 'upload.svg')
     icon_up = resource_filename('resources.icons.toolbar', 'up.svg')
-    icon_open = resource_filename('resources.icons.toolbar', 'open.svg')
+    icon_path_fork = resource_filename('resources.icons.toolbar', 'fork_right.svg')
+
     icon_file = resource_filename('resources.icons.files', 'file.svg')
     icon_folder = resource_filename('resources.icons.files', 'folder.svg')
     icon_file_unknown = resource_filename('resources.icons.files', 'file_unknown.svg')

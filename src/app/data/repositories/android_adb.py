@@ -64,7 +64,7 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
-        path = ADBManager.set_path(path)
+        path = ADBManager.set_current_path(path)
         args = adb_helper.ShellCommand.LS_LIST_DIRS + [shlex.quote(path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
@@ -90,7 +90,7 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
-        path = ADBManager.path()
+        path = ADBManager.get_current_path()
         args = adb_helper.ShellCommand.LS_ALL_LIST + [shlex.quote(path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful and response.ExitCode != 1:
@@ -172,7 +172,7 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
-        args = [adb_helper.ShellCommand.MKDIR, (ADBManager.path() + name).replace(' ', r"\ ")]
+        args = [adb_helper.ShellCommand.MKDIR, (ADBManager.get_current_path() + name).replace(' ', r"\ ")]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
@@ -180,9 +180,9 @@ class FileRepository:
 
     @classmethod
     def upload(cls, progress_callback: callable, source: str) -> Tuple[str, str]:
-        if ADBManager.get_device() and ADBManager.path() and source:
+        if ADBManager.get_device() and ADBManager.get_current_path() and source:
             helper = cls.UpDownHelper(progress_callback)
-            response = adb_helper.push(ADBManager.get_device().id, source, ADBManager.path(), helper.call)
+            response = adb_helper.push(ADBManager.get_device().id, source, ADBManager.get_current_path(), helper.call)
             if not response.IsSuccessful:
                 return None, response.ErrorData or "\n".join(helper.messages)
 

@@ -2,6 +2,7 @@
 # Copyright (C) 2022  Azat Aldeshov
 import logging
 import posixpath
+import os
 
 from PyQt5.QtCore import QObject
 from adb_shell.adb_device import AdbDeviceTcp, AdbDeviceUsb
@@ -14,39 +15,126 @@ from app.helpers.singleton import Singleton
 class ADBManager:
     __metaclass__ = Singleton
 
-    __path = []
+    default_path = "/"
+
     __device = None
 
-    @classmethod
-    def path(cls) -> str:
-        def_path = '/'
-        return posixpath.join('/', *cls.__path) + '/' if cls.__path else def_path
+    __paths = []
+    __pathIndex = -1
+
+    @staticmethod
+    def normalized_path(path: str) -> str:
+        if not path or len(path) == 0:
+            return ADBManager.default_path
+
+        path = os.path.normcase(path)
+        path = os.path.normpath(path)
+        path = posixpath.normpath(path)
+        if not path.endswith("/"):
+            path += "/"
+        return path
+
+    @staticmethod
+    def remove_entries(ls, lo, hi):
+        res = ls
+        for idx, _ in enumerate(ls):
+            if idx in range(lo, hi + 1):
+                res.pop(idx)
+        return res
 
     @classmethod
-    def open(cls, file: File) -> bool:
-        if not cls.__device:
-            return False
+    def reset(cls) -> bool:
+        cls.__paths = []
+        cls.__pathIndex = -1
+        return True
 
-        if file.isdir and file.name:
-            cls.__path.append(file.name)
-            return True
+    @classmethod
+    def get_all_paths(cls) -> list:
+        return cls.__paths
+
+    @classmethod
+    def is_back(cls) -> bool:
+        return cls.__pathIndex > 0;
+
+    @classmethod
+    def is_forward(cls) -> bool:
+        return cls.__pathIndex < len(cls.__paths) - 1;
+
+    @classmethod
+    def go_forward(cls) -> str:
+        if not cls.is_forward():
+            return None
+
+        cls.__pathIndex += 1
+        return cls.__paths[cls.__pathIndex]
+
+    @classmethod
+    def go_back(cls) -> str:
+        if not cls.is_back():
+            return None
+
+        cls.__pathIndex -= 1
+        return cls.__paths[cls.__pathIndex];
+
+    @classmethod
+    def go_home(cls) -> str:
+        return cls.set_current_path(ADBManager.default_path)
+
+    @classmethod
+    def go_up(cls) -> bool:
+        cpath = cls.get_current_path()
+        if cpath:
+            cpath = os.path.normpath(cpath)
+
+            tokens = cpath.split(os.sep)
+            tokens.pop()
+            npath = '/'.join(tokens)
+
+            if len(npath) == 0:
+                npath = ADBManager.default_path
+
+            if cls.set_current_path(npath):
+                return True
+
         return False
 
     @classmethod
-    def go(cls, file: File) -> bool:
-        if file.isdir and file.location:
-            cls.__path.clear()
-            for name in file.path.split('/'):
-                cls.__path.append(name) if name else ''
-            return True
-        return False
+    def get_current_path(cls) -> str:
+        if len(cls.__paths) > 0:
+            return cls.__paths[cls.__pathIndex]
+
+        return ADBManager.default_path
 
     @classmethod
-    def up(cls) -> bool:
-        if cls.__path:
-            cls.__path.pop()
-            return True
-        return False
+    def set_current_path(cls, file) -> str:
+        new_path = ADBManager.default_path
+
+        if not file:
+            print(f"set_current_path: file object is not valid")
+            return new_path
+
+        if isinstance(file, File):
+            new_path = file.path
+        elif isinstance(file, str):
+            new_path = file
+        else:
+            return new_path
+
+        count = len(cls.__paths)
+        if count > 0:
+            top_path = cls.__paths[cls.__pathIndex]
+            if new_path == top_path:
+                return new_path
+
+        if cls.is_forward():
+            start = cls.__pathIndex + 1
+            end = count - cls.__pathIndex - 1
+            cls.__paths = cls.remove_entries(cls.__paths, start, end)
+
+        new_path = ADBManager.normalized_path(new_path)
+        cls.__paths.append(new_path)
+        cls.__pathIndex += 1
+        return new_path
 
     @classmethod
     def get_device(cls) -> Device:
@@ -62,16 +150,7 @@ class ADBManager:
     @classmethod
     def clear_device(cls):
         cls.__device = None
-        cls.__path.clear()
-
-    @classmethod
-    def clear_path(cls):
-        cls.__path.clear()
-        return True
-
-    @staticmethod
-    def set_path(path: str) -> str:
-        return posixpath.normpath(path)
+        cls.reset()
 
 
 class PythonADBManager(ADBManager):

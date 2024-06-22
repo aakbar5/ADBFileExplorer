@@ -17,7 +17,7 @@ from app.core.adb import Adb
 from app.core.managers import Global
 from app.data.models import FileType, MessageData, MessageType
 from app.data.repositories import FileRepository
-from app.gui.explorer.toolbar import ParentButton, UploadTools, PathBar, HomeButton, RefreshButton
+from app.gui.explorer.toolbar import UpButton, UploadTools, PathBar, HomeButton, RefreshButton, BackButton, ForwardButton
 from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper, read_string_from_file
 from app.gui.explorer.statusbar import DeviceStatusThread
 
@@ -69,9 +69,17 @@ class FileExplorerToolbar(QWidget):
         self.home_button.setSizePolicy(policy)
         self.layout().addWidget(self.home_button)
 
-        self.parent_button = ParentButton(self)
-        self.parent_button.setSizePolicy(policy)
-        self.layout().addWidget(self.parent_button)
+        self.up_button = UpButton(self)
+        self.up_button.setSizePolicy(policy)
+        self.layout().addWidget(self.up_button)
+
+        self.back_button = BackButton(self)
+        self.back_button.setSizePolicy(policy)
+        self.layout().addWidget(self.back_button)
+
+        self.foward_button = ForwardButton(self)
+        self.foward_button.setSizePolicy(policy)
+        self.layout().addWidget(self.foward_button)
 
         self.refresh_button = RefreshButton(self)
         self.refresh_button.setSizePolicy(policy)
@@ -390,7 +398,7 @@ class FileExplorerWidget(QWidget):
         return super(FileExplorerWidget, self).eventFilter(obj, event)
 
     def open(self, index: QModelIndex = ...):
-        if Adb.manager().open(self.model.items[index.row()]):
+        if Adb.manager().set_current_path(self.model.items[index.row()]):
             Global().communicate.files_refresh.emit()
 
     def context_menu(self, pos: QPoint):

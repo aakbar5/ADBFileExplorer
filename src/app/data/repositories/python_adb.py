@@ -80,7 +80,7 @@ class FileRepository:
 
         files = []
         try:
-            path = PythonADBManager.path()
+            path = PythonADBManager.get_current_path()
             response = PythonADBManager.device.list(path)
 
             args = ShellCommand.LS_ALL_DIRS + [shlex.quote(path) + "*/"]
@@ -209,7 +209,7 @@ class FileRepository:
             return None, "Device not available!"
 
         try:
-            args = [ShellCommand.MKDIR, (PythonADBManager.path() + name)]
+            args = [ShellCommand.MKDIR, (PythonADBManager.get_current_path() + name)]
             response = PythonADBManager.device.shell(shlex.join(args))
             return None, response
 
@@ -220,8 +220,8 @@ class FileRepository:
     @classmethod
     def upload(cls, progress_callback: callable, source: str) -> Tuple[str, str]:
         helper = cls.UpDownHelper(progress_callback)
-        destination = PythonADBManager.path() + os.path.basename(os.path.normpath(source))
-        if PythonADBManager.device and PythonADBManager.device.available and PythonADBManager.path() and source:
+        destination = PythonADBManager.get_current_path() + os.path.basename(os.path.normpath(source))
+        if PythonADBManager.device and PythonADBManager.device.available and PythonADBManager.get_current_path() and source:
             try:
                 PythonADBManager.device.push(
                     local_path=source,
