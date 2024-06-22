@@ -189,7 +189,12 @@ class FileListModel(QAbstractListModel):
         if file_type == FileType.DIRECTORY:
             return Resources.icon_folder
         elif file_type == FileType.FILE:
-            return Resources.icon_file
+            file_name = self.items[index.row()].name
+            ext = os.path.splitext(file_name)[1]
+            if ext in Resources.icons_files.keys():
+                return Resources.icons_files[ext]
+            else:
+                return Resources.icon_file
         elif file_type == FileType.LINK:
             link_type = self.items[index.row()].link_type
             if link_type == FileType.DIRECTORY:

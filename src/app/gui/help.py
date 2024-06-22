@@ -36,6 +36,11 @@ class About(QWidget):
         about_text += "Web: <a target='_blank' href='%s'>%s</a>" % (fa_link, fa_link)
         about_text += "<br/>"
 
+        ftype_link = 'https://www.reshot.com/free-svg-icons/pack/file-formats-flat-multicolor-icons-HCK8PU3MX9/'
+        about_text += "File Formats Flat Multicolor Icons<br/>"
+        about_text += "Web: <a target='_blank' href='%s'>%s</a>" % (ftype_link, 'www.reshot.com')
+        about_text += "<br/>"
+
         about_label = QLabel(about_text, self)
         about_label.setOpenExternalLinks(True)
         about_label.move(10, 100)
