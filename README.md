@@ -14,13 +14,23 @@ Features:
 
 ## Screenshots
 
-Devices & Notifications
+No device:
 
-<img src="https://user-images.githubusercontent.com/47108137/159409583-a2106cb3-e39c-4d29-9226-e44daadaec72.png" width="480" alt="Devices & Notifications">
+<img src="assets/screenshots/no_devices.png" width="480" alt="No device">
+
+Device detect:
+
+<img src="assets/screenshots/device_detected_1.png" width="480" alt="device detect">
+
+<img src="assets/screenshots/device_detected_2.png" width="480" alt="device detect">
 
 Files
 
-<img src="https://user-images.githubusercontent.com/47108137/159409633-98662fda-b919-4b3a-ac39-230534a5a839.png" width="480" alt="Files">
+<img src="assets/screenshots/device_file_list.png" width="480" alt="Files">
+
+Preferences
+
+<img src="assets/screenshots/perferences.png" width="430" alt="Files">
 
 ## Requirements
 
@@ -34,21 +44,8 @@ pip install PyQt5 libusb1 adb-shell
 ## Launch
 
 1. Clone the repo
-2. cd ADBFileExplorer
-3. Edit [settings.json](src%2Fapp%2Fsettings.json) from the project root if necessary. `src/app/settings.json`
-
-```json5
-{
-  "adb_path": "adb",
-//  "adb_core": "external",
-  "adb_kill_server_at_exit": false,
-  "preserve_timestamp": true,
-  "adb_run_as_root": false
-}
-```
-
-+ `adb_path` - Full adb path or just 'adb' if the executable is in `$PATH`
-+ `adb_core` - Set to 'external' to use external `adb` executable, otherwise the app will use `adb-shell`
+2. `cd ADBFileExplorer`
+3. Setup python env
 
 
 ```shell
@@ -57,11 +54,6 @@ pip install -r requirements.txt
 run.bat # To start application on Windows
 bash run.sh # To start application on Linux...
 ```
-
-## Attention
-
-Application uses by default `adb-shell`. There may be problems with listing, pushing, or pulling files using `adb-shell`.
-For a better experience, try adding `"adb_core": "external"` to `settings.json`.
 
 ## License
 
