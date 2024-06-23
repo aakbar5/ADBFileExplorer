@@ -6,13 +6,14 @@
     "configurations": [
         {
             "name": "Python: Project",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "src/main.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
                 "PYTHONUNBUFFERED": "1",
+                "QT_QPA_PLATFORM": "xcb",
             }
         }
     ]
