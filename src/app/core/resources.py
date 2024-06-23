@@ -19,6 +19,8 @@ class Resources:
     icon_phone = resource_filename('resources.icons', 'phone.svg')
     icon_phone_unknown = resource_filename('resources.icons', 'phone_unknown.svg')
 
+    icon_search_case_sensitive = resource_filename('resources.icons', 'case_sensitive.svg')
+
     icon_back = resource_filename('resources.icons.toolbar', 'back.svg')
     icon_forward = resource_filename('resources.icons.toolbar', 'forward.svg')
     icon_history = resource_filename('resources.icons.toolbar', 'history.svg')

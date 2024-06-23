@@ -1,8 +1,9 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from PyQt5.QtCore import QObject, QEvent
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtCore import QObject, QEvent, QSize
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
+from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QShortcut, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
 
 from app.core.resources import Resources
 from app.core.settings import SettingsOptions, Settings
@@ -11,7 +12,7 @@ from app.core.managers import Global
 from app.data.models import MessageData, MessageType
 from app.data.repositories import FileRepository
 from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper
-
+from app.helpers.lookup import QtEventsLookUp
 
 class UploadTools(QToolButton):
     def __init__(self, parent):
@@ -195,6 +196,14 @@ class PathBar(QWidget):
         self.text.setText(self.device_path)
         self.text.textEdited.connect(self._update)
         self.text.returnPressed.connect(self._open_action)
+
+        # TODO: Need to design a proper framework to handle ENTER
+        # I am seeing that my pathbar is not getting ENTER event
+        # Donot simply register enter hijack as we got other
+        # gui components which likes to handle enter key if they got
+        # focus
+        # self.enteryKey = QShortcut(QtCore.Qt.Key_Enter, self.text)
+        # self.enteryKey.activated.connect(self._action_go)
         self.layout().addWidget(self.text)
 
         self.open = QToolButton(self)
@@ -225,6 +234,7 @@ class PathBar(QWidget):
             self._open_action()
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
+        print(f"PathBar: eventFilter (event: {QtEventsLookUp[event.type()]})")
         if obj == self.text and event.type() == QEvent.FocusIn:
             self.text.setText(self.device_path)
         elif obj == self.text and event.type() == QEvent.FocusOut:
@@ -271,3 +281,48 @@ class PathBar(QWidget):
                     body="<span style='color: red; font-weight: 600'> Cannot open location </span>",
                 )
             )
+
+class SearchBar(QWidget):
+    def __init__(self, parent: QWidget):
+        super(SearchBar, self).__init__(parent)
+        self.setLayout(QHBoxLayout(self))
+
+        self.text = QLineEdit(self)
+        self.text.setStyleSheet("padding: 5;")
+        self.text.setText("")
+        self.text.textEdited.connect(self._textUpdate)
+        self.text.returnPressed.connect(self._textEnter)
+        self.layout().addWidget(self.text)
+
+        self.caseSensitivity = QToolButton(self)
+        self.caseSensitivity.setStyleSheet("padding: 4;")
+
+        self.caseSensitivityVal = True
+        self.caseSensitivity.setDown(self.caseSensitivityVal)
+
+        self.caseSensitivityAction = QAction(QIcon(Resources.icon_search_case_sensitive), 'Case Sensitive', self)
+        self.caseSensitivityAction.triggered.connect(self._changeCaseSentivity)
+        self.caseSensitivity.setDefaultAction(self.caseSensitivityAction)
+
+        self.layout().addWidget(self.caseSensitivity)
+
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        Global().communicate.searchCaseUpdate.emit(self.caseSensitivityVal)
+
+    def _textUpdate(self, text: str):
+        print("SearchBar: text field is updated -> ", text)
+        Global().communicate.searchTextUpdate.emit(text)
+
+    def _textEnter(self):
+        text = self.text.text()
+        self.text.clear()
+        print("SearchBar: text field is entered -> ", text)
+        Global().communicate.searchTextUpdate.emit(text)
+
+    def _changeCaseSentivity(self):
+        if self.caseSensitivityVal:
+            self.caseSensitivityVal = False
+        else:
+            self.caseSensitivityVal = True
+        self.caseSensitivity.setDown(self.caseSensitivityVal)
+        Global().communicate.searchCaseUpdate.emit(self.caseSensitivityVal)

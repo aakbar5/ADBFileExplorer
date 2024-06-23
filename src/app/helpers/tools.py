@@ -53,9 +53,12 @@ class AsyncRepositoryWorker(QThread):
     on_response = QtCore.pyqtSignal(object, object)  # Response : data, error
 
     def __init__(
-            self, worker_id: int, name: str,
+            self,
+            worker_id: int,
+            name: str,
             repository_method: callable,
-            arguments: tuple, response_callback: callable
+            arguments: tuple,
+            response_callback: callable,
     ):
         super(AsyncRepositoryWorker, self).__init__()
         self.on_response.connect(response_callback)
@@ -77,6 +80,7 @@ class AsyncRepositoryWorker(QThread):
             self.loading_widget.close()
         self.deleteLater()
         self.closed = True
+        print(f"worker # {self.name} (id={self.id}) is closed")
 
     def set_loading_widget(self, widget: QWidget):
         self.loading_widget = widget
@@ -110,6 +114,9 @@ class Communicate(QObject):
     status_bar_android_version = QtCore.pyqtSignal(str)  # Message
     status_bar_is_root = QtCore.pyqtSignal(int)  # int
     status_bar_battery_level = QtCore.pyqtSignal(str, str)  # Message
+
+    searchTextUpdate = QtCore.pyqtSignal(str)
+    searchCaseUpdate = QtCore.pyqtSignal(bool)
 
 def get_python_rsa_keys_signer(rerun=True) -> PythonRSASigner:
     privkey = os.path.expanduser('~/.android/adbkey')
