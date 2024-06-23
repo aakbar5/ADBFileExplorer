@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=ADB File Explorer
+GenericName=ADB File Explorer
+Encoding=UTF-8
+Type=Application
+Terminal=false
+Exec=/home/CORP/a.akbar/workspace/android/ADBFileExplorer/run.sh
+Icon=/home/CORP/a.akbar/workspace/android/ADBFileExplorer/src/resources/icons/logo.svg
+Comment=ADB File Explorer
+StartupWMClass="ADB File Explorer"
