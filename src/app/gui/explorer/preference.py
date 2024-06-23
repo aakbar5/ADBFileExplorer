@@ -74,6 +74,27 @@ class PerferenceDialog(QDialog):
         startupSettingsGrpBoxLayout.addWidget(self.widget_adb_as_root)
 
         # -------------------
+        # General settings
+        generalSettingsGrpBox = QGroupBox("General")
+        dlgLayout.addWidget(generalSettingsGrpBox)
+
+        generalSettingsGrpBoxLayout = QFormLayout()
+        generalSettingsGrpBox.setLayout(generalSettingsGrpBoxLayout)
+
+        self.statusbar_update_time = QLineEdit()
+        self.statusbar_update_time.setValidator(QIntValidator())
+        val = Settings.get_value(SettingsOptions.STATUSBAR_UPDATE_TIME)
+        self.statusbar_update_time.setText(str(val))
+        generalSettingsGrpBoxLayout.addRow("Update status bar (ms):", self.statusbar_update_time)
+
+        options = ['Informal', 'ISO', 'Locale (24 Hours)', 'Locale (12 Hours)']
+        idx = options.index(Settings.get_value(SettingsOptions.FILE_DATE_FORMAT))
+        self.widget_date_format = QComboBox()
+        self.widget_date_format.addItems(options)
+        self.widget_date_format.setCurrentIndex(idx)
+        generalSettingsGrpBoxLayout.addRow("File timestamp:", self.widget_date_format)
+
+        # -------------------
         # Dialog buttons
         btnBox = QDialogButtonBox()
         btnBox.setStandardButtons(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)

@@ -2,6 +2,7 @@
 # Copyright (C) 2022  Azat Aldeshov
 import datetime
 import posixpath
+from app.core.settings import SettingsOptions, Settings
 
 size_types = (
     ('BYTE', 'B'),
@@ -83,7 +84,22 @@ class File:
         if not self.raw_date:
             return None
 
+        # An object of <class 'datetime.datetime'>
         created = self.raw_date
+
+        date_fmt_type = Settings.get_value(SettingsOptions.FILE_DATE_FORMAT)
+        if date_fmt_type == 'ISO':
+            return str(created.isoformat())
+
+        if date_fmt_type == 'Locale (24 Hours)':
+            format = "%m/%d/%Y %H:%M"
+            return str(created.strftime(format))
+
+        if date_fmt_type == 'Locale (12 Hours)':
+            format = "%m/%d/%Y %I:%M %p"
+            return str(created.strftime(format))
+
+        # Default is informal
         now = datetime.datetime.now()
         if created.year < now.year:
             return '%s %s %s' % (created.day, months[created.month][1], created.year)

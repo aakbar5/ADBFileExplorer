@@ -308,7 +308,7 @@ class FileExplorerWidget(QWidget):
         Global().communicate.status_bar_is_root.emit(data)
 
         # Setup thread to monitor device
-        self.device_status_thread = DeviceStatusThread()
+        self.device_status_thread = DeviceStatusThread(Settings.get_value(SettingsOptions.STATUSBAR_UPDATE_TIME))
         self.device_status_thread.start()
 
     def onClicked(self):

@@ -71,6 +71,8 @@ class MenuBar(QMenuBar):
             Settings.set_value(SettingsOptions.ADB_KILL_AT_EXIT, perfDlg.widget_adb_kill_server_at_exit.isChecked())
             Settings.set_value(SettingsOptions.PRESERVE_TIMESTAMP, perfDlg.widget_preserve_timestamp.isChecked())
             Settings.set_value(SettingsOptions.ADB_AS_ROOT, perfDlg.widget_adb_as_root.isChecked())
+            Settings.set_value(SettingsOptions.STATUSBAR_UPDATE_TIME, perfDlg.statusbar_update_time.text())
+            Settings.set_value(SettingsOptions.FILE_DATE_FORMAT, perfDlg.widget_date_format.currentText())
 
     def disconnect(self):
         worker = AsyncRepositoryWorker(

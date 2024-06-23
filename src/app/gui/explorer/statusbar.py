@@ -214,11 +214,11 @@ class DeviceLabelWidget(QWidget):
 class DeviceStatusThread(threading.Thread, QObject):
     finished = pyqtSignal()
 
-    def __init__(self, delay_seconds=4):
+    def __init__(self, delay_mseconds=1000):
         QObject.__init__(self)
         print("DeviceStatusThread init is called...")
 
-        self._delay = delay_seconds
+        self._delay_sec = delay_mseconds / 1000
         self._stop_event = threading.Event()
         threading.Thread.__init__(self)
 
@@ -231,7 +231,7 @@ class DeviceStatusThread(threading.Thread, QObject):
                 lines_sts = data_sts.splitlines()
             Global().communicate.status_bar_battery_level.emit(lines_level[0], lines_sts[0])
 
-            self._stop_event.wait(self._delay)
+            self._stop_event.wait(self._delay_sec)
 
         print("DeviceStatusThread is finished...")
         self.finished.emit()

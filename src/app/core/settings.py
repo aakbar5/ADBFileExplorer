@@ -19,6 +19,8 @@ class SettingsOptions:
     RESTORE_WIN_GEOMETRY = 'restore_win_geometry'
     WIN_SIZE = 'win_size'
     WIN_POS = 'win_pos'
+    STATUSBAR_UPDATE_TIME = 'statusbar_update_time'
+    FILE_DATE_FORMAT = 'file_date_format'
 
 class Settings(metaclass=Singleton):
     settings_ = None
@@ -45,7 +47,7 @@ class Settings(metaclass=Singleton):
             cls.settings_.setValue(SettingsOptions.PRESERVE_TIMESTAMP, True)
 
         if not cls.settings_.contains(SettingsOptions.NOTIFICATION_TIMEOUT):
-            cls.settings_.setValue(SettingsOptions.NOTIFICATION_TIMEOUT, 15000)
+            cls.settings_.setValue(SettingsOptions.NOTIFICATION_TIMEOUT, 2000)
 
         user_download_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
         if not cls.settings_.contains(SettingsOptions.DOWNLOAD_PATH):
@@ -62,6 +64,12 @@ class Settings(metaclass=Singleton):
 
         if not cls.settings_.contains(SettingsOptions.WIN_POS):
             cls.settings_.setValue(SettingsOptions.WIN_POS, QPoint(50, 50))
+
+        if not cls.settings_.contains(SettingsOptions.STATUSBAR_UPDATE_TIME):
+            cls.settings_.setValue(SettingsOptions.STATUSBAR_UPDATE_TIME, 100)
+
+        if not cls.settings_.contains(SettingsOptions.FILE_DATE_FORMAT):
+            cls.settings_.setValue(SettingsOptions.FILE_DATE_FORMAT, 'Informal')
 
     @classmethod
     def to_bool(cls, value):
@@ -114,5 +122,9 @@ class Settings(metaclass=Singleton):
             return QSize(raw_value)
         elif key == SettingsOptions.WIN_POS:
             return QPoint(raw_value)
+        elif key == SettingsOptions.STATUSBAR_UPDATE_TIME:
+            return int(raw_value)
+        elif key == SettingsOptions.FILE_DATE_FORMAT:
+            return str(raw_value)
         else:
             return raw_value
