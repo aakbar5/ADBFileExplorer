@@ -73,6 +73,7 @@ class MenuBar(QMenuBar):
             Settings.set_value(SettingsOptions.ADB_AS_ROOT, perfDlg.widget_adb_as_root.isChecked())
             Settings.set_value(SettingsOptions.STATUSBAR_UPDATE_TIME, perfDlg.statusbar_update_time.text())
             Settings.set_value(SettingsOptions.FILE_DATE_FORMAT, perfDlg.widget_date_format.currentText())
+            Global().communicate.files_refresh.emit()
 
     def disconnect(self):
         worker = AsyncRepositoryWorker(
