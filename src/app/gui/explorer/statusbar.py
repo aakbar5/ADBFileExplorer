@@ -224,12 +224,18 @@ class DeviceStatusThread(threading.Thread, QObject):
 
     def run(self):
         while not self._stop_event.isSet():
+
+            # Update battery status
             data_level, data_sts = FileRepository.DeviceBatteryLevel()
             if data_level:
                 lines_level = data_level.splitlines()
             if data_sts:
                 lines_sts = data_sts.splitlines()
             Global().communicate.status_bar_battery_level.emit(lines_level[0], lines_sts[0])
+
+            # Update root/unroot status
+            data, _ = FileRepository.IsAndroidRoot()
+            Global().communicate.status_bar_is_root.emit(data)
 
             self._stop_event.wait(self._delay_sec)
 
