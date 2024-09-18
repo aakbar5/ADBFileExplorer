@@ -41,6 +41,8 @@ class CommonProcess:
                 self.IsSuccessful = self.ExitCode == 0
                 self.ErrorData = error.decode(encoding='utf-8') if error else None
                 self.OutputData = data.decode(encoding='utf-8') if data else None
+            except UnicodeDecodeError:
+                self.ErrorData = "Can't open it, file format is uknown"
             except FileNotFoundError:
                 self.ErrorData = "Command '%s' failed! File (command) '%s' not found!" % \
                                  (' '.join(arguments), arguments[0])
