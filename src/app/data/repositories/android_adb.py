@@ -64,12 +64,12 @@ class FileRepository:
         if not ADBManager.get_device():
             return None, "No device selected!"
 
+        # TODO: Do we really need to chage current path
         path = ADBManager.set_current_path(path)
         args = adb_helper.ShellCommand.LS_LIST_DIRS + [shlex.quote(path)]
         response = adb_helper.shell(ADBManager.get_device().id, args)
         if not response.IsSuccessful:
             return None, response.ErrorData or response.OutputData
-
         file = convert_to_file(response.OutputData.strip())
         if not file:
             return None, "Unexpected string:\n%s" % response.OutputData

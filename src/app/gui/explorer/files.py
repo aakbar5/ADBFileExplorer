@@ -740,18 +740,9 @@ class FileExplorerWidget(QWidget):
         self.download_to(delete_too=True)
 
     def file_properties(self):
-        file, error = FileRepository.file(self.file.path)
-        file = file if file else self.file
+        file = self.file
 
-        if error:
-            Global().communicate.notification.emit(
-                MessageData(
-                    timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
-                    title="Opening folder",
-                    body="<span style='color: red; font-weight: 600'> %s </span>" % error,
-                )
-            )
-
+        # Prepare info
         info = "<br/><u><b>%s</b></u><br/>" % str(file)
         info += "<pre>Name:        %s</pre>" % file.name or '-'
         info += "<pre>Owner:       %s</pre>" % file.owner or '-'
