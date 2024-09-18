@@ -409,6 +409,17 @@ class FileExplorerWidget(QWidget):
         else:
             self.tableSortedModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
+    def _getSelectedItems(self):
+        # Note: Incase of filter is acitve curr_idx_row
+        # will be different to that of orig_idx_row
+        row_count = self.tableSortedModel.rowCount()
+        curr_idx = self.tableView.currentIndex()
+        curr_idx_row = self.tableView.currentIndex().row()
+        orig_idx_row = self.tableSortedModel.mapToSource(curr_idx).row()
+
+        fileObject = self.tableModel.items[orig_idx_row]
+        return fileObject
+
     @property
     def file(self):
         if self.tableView and self.tableView.currentIndex():
@@ -491,10 +502,8 @@ class FileExplorerWidget(QWidget):
         return super(FileExplorerWidget, self).eventFilter(obj, event)
 
     def onDoubleClicked(self, mi):
-        row = mi.row()
-        column = mi.column()
-        fileObject = self.tableModel.items[row]
-        print(f"onDoubleClicked ({row},{column}) {fileObject}")
+        fileObject = self._getSelectedItems()
+        print(f"onDoubleClicked: {fileObject}")
         if Adb.manager().set_current_path(fileObject):
             Global().communicate.files_refresh.emit()
 
@@ -503,10 +512,8 @@ class FileExplorerWidget(QWidget):
         # will find that bar is selected and control is coming to this function
         # at this point, press ENTER key I was hoping to received onEnterKey but it
         # is not happening.
-        row = mi.row()
-        column = mi.column()
-        fileObject = self.tableModel.items[row]
-        print(f"onClicked (focus: {self.tableView.hasFocus()})({row},{column}) {fileObject}")
+        fileObject = self._getSelectedItems()
+        print(f"onClicked (focus: {self.tableView.hasFocus()}){fileObject}")
 
     def onDeleteKey(self):
         print('onDeleteKey: tableView: ' + str(self.tableView.hasFocus()))
@@ -624,14 +631,7 @@ class FileExplorerWidget(QWidget):
         self.tableView.edit(self.tableView.currentIndex())
 
     def open_file(self):
-        # Note: Incase of filter is acitve curr_idx_row
-        # will be different to that of orig_idx_row
-        row_count = self.tableSortedModel.rowCount()
-        curr_idx = self.tableView.currentIndex()
-        curr_idx_row = self.tableView.currentIndex().row()
-        orig_idx_row = self.tableSortedModel.mapToSource(curr_idx).row()
-
-        fileObject = self.tableModel.items[orig_idx_row]
+        fileObject = self._getSelectedItems()
         print(f"open_file: {fileObject.path}")
 
         # QDesktopServices.openUrl(QUrl.fromLocalFile("downloaded_path")) open via external app

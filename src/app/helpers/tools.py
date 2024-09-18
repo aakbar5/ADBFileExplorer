@@ -119,7 +119,7 @@ class Communicate(QObject):
     searchCaseUpdate = QtCore.pyqtSignal(bool)
 
 def get_python_rsa_keys_signer(rerun=True) -> PythonRSASigner:
-    privkey = os.path.expanduser('~/.android/adbkey')
+    privkey = os.path.expanduser('~/.android/adbkey.file')
     if os.path.isfile(privkey):
         with open(privkey) as f:
             private = f.read()
