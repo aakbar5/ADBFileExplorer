@@ -73,6 +73,8 @@ class MenuBar(QMenuBar):
             Settings.set_value(SettingsOptions.ADB_AS_ROOT, perfDlg.widget_adb_as_root.isChecked())
             Settings.set_value(SettingsOptions.STATUSBAR_UPDATE_TIME, perfDlg.statusbar_update_time.text())
             Settings.set_value(SettingsOptions.FILE_DATE_FORMAT, perfDlg.widget_date_format.currentText())
+            Settings.set_value(SettingsOptions.DOWNLOAD_PATH, perfDlg.download_dir_name.text())
+            Settings.set_value(SettingsOptions.ADB_KEY_FILE_PATH, perfDlg.adb_key_file_name.text())
             Global().communicate.files_refresh.emit()
 
     def disconnect(self):

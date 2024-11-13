@@ -21,6 +21,7 @@ class SettingsOptions:
     WIN_POS = 'win_pos'
     STATUSBAR_UPDATE_TIME = 'statusbar_update_time'
     FILE_DATE_FORMAT = 'file_date_format'
+    ADB_KEY_FILE_PATH = 'adb_key_file_path'
 
 class Settings(metaclass=Singleton):
     settings_ = None
@@ -70,6 +71,11 @@ class Settings(metaclass=Singleton):
 
         if not cls.settings_.contains(SettingsOptions.FILE_DATE_FORMAT):
             cls.settings_.setValue(SettingsOptions.FILE_DATE_FORMAT, 'Informal')
+
+        # os.path.expanduser('~/.android/adbkey')
+        adb_key_file = os.path.join(os.path.expanduser('~'), '.android', 'adbkey')
+        if not cls.settings_.contains(SettingsOptions.ADB_KEY_FILE_PATH):
+            cls.settings_.setValue(SettingsOptions.ADB_KEY_FILE_PATH, adb_key_file)
 
     @classmethod
     def to_bool(cls, value):
@@ -125,6 +131,8 @@ class Settings(metaclass=Singleton):
         elif key == SettingsOptions.STATUSBAR_UPDATE_TIME:
             return int(raw_value)
         elif key == SettingsOptions.FILE_DATE_FORMAT:
+            return str(raw_value)
+        elif key == SettingsOptions.ADB_KEY_FILE_PATH:
             return str(raw_value)
         else:
             return raw_value
