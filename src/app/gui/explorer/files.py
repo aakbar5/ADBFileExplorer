@@ -501,10 +501,7 @@ class FileExplorerWidget(QWidget):
         return super(FileExplorerWidget, self).eventFilter(obj, event)
 
     def onDoubleClicked(self, mi):
-        fileObject = self._getSelectedItems()
-        print(f"onDoubleClicked: {fileObject}")
-        if Adb.manager().set_current_path(fileObject):
-            Global().communicate.files_refresh.emit()
+        self.open_file()
 
     def onClicked(self, mi):
         # TODO: Once tableview is showing file list; use mouse to select anything; you
