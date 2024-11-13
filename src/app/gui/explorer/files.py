@@ -634,10 +634,9 @@ class FileExplorerWidget(QWidget):
         fileObject = self._getSelectedItems()
         print(f"open_file: {fileObject.path}")
 
-        # QDesktopServices.openUrl(QUrl.fromLocalFile("downloaded_path")) open via external app
         if fileObject.isdir:
             print(f"open_file: is_dir")
-            if Adb.manager().open(fileObject):
+            if Adb.manager().set_current_path(fileObject):
                 Global().communicate.files_refresh.emit()
         else:
             data, error = FileRepository.open_file(fileObject)
