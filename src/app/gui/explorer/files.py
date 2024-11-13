@@ -303,9 +303,6 @@ class FileExplorerWidget(QWidget):
         # self.tableView.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         # self.tableView.resizeColumnsToContents()
 
-        # self.enterKey = QShortcut(Qt.Key_Return, self.tableView)
-        # self.enterKey.activated.connect(self.onEnterKey)
-
         self.deleteKey = QShortcut(QtCore.Qt.Key_Delete, self.tableView)
         self.deleteKey.activated.connect(self.onDeleteKey)
 
@@ -492,10 +489,12 @@ class FileExplorerWidget(QWidget):
         #         event.matches(QKeySequence.InsertParagraphSeparator) and \
         #         not self.tableView.isPersistentEditorOpen(self.list.currentIndex()):
         #     self.open(self.tableView.currentIndex())
-        if obj == self.tableView and event.type() == QEvent.Enter:
-            print(f"FileExplorerWidget: ENTER")
-        elif obj == self.tableView and event.type() == QEvent.KeyPress:
-            print(f"FileExplorerWidget: KeyPress")
+
+        if obj is self.tableView and event.type() == QtCore.QEvent.KeyPress:
+            if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+                self.onEnterKey()
+            else:
+                print(f"FileExplorerWidget: KeyPress -> Misc")
         elif obj == self.tableView and event.type() == QEvent.Hide:
             self.device_status_thread.stop()
 
@@ -521,15 +520,19 @@ class FileExplorerWidget(QWidget):
             self.delete()
 
     def onEnterKey(self):
-        print('onEnterKey: tableView: ' + str(self.tableView.hasFocus()))
         if self.tableView.hasFocus():
-            file_names = '\n'.join(map(lambda f: f.name, self.files))
-            count = len([f for f in self.files])
-            print(f"onEnterKey: Count={count}, files={file_names}")
-            if count == 1:
-                for file in self.files:
-                    if Adb.manager().open(file):
-                        Global().communicate.files_refresh.emit()
+            selectedCount = len([f for f in self.files])
+            print(f"onEnterKey: Count={selectedCount}")
+            if selectedCount == 1:
+                self.open_file()
+            else:
+                msg += str(selectedCount) + " files are selected \n"
+                QMessageBox.information(
+                    self,
+                    'Info',
+                    msg,
+                    QMessageBox.Ok, QMessageBox.Ok
+                )
 
     def context_menu(self, pos: QPoint):
         menu = QMenu()
