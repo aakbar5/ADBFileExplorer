@@ -1,8 +1,9 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QObject, QEvent, QSize
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QClipboard, QCursor
 from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QShortcut, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
 
 from app.core.resources import Resources
@@ -203,6 +204,8 @@ class PathBar(QWidget):
         self.text.setText(self.device_path)
         self.text.textEdited.connect(self._update)
         self.text.returnPressed.connect(self._open_action)
+        self.text.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.text.customContextMenuRequested.connect (self.context_menu)
 
         # TODO: Need to design a proper framework to handle ENTER
         # I am seeing that my pathbar is not getting ENTER event
@@ -242,12 +245,43 @@ class PathBar(QWidget):
         if old_device_path:
             self._open_action()
 
+    def context_menu(self):
+        menu = QMenu(self)
+
+        actionCopy = QAction(QtGui.QIcon.fromTheme("edit-copy"), "Copy")
+        actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        actionCopy.triggered.connect(lambda: QApplication.instance().clipboard().setText(self.device_path))
+
+        actionPaste = QAction(QtGui.QIcon.fromTheme("edit-paste"), "Paste")
+        actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        actionPaste.triggered.connect(lambda: print("Paste"))
+        actionPaste.setEnabled(False)
+
+        menu.addAction(actionCopy)
+        menu.addAction(actionPaste)
+        menu.exec_(QCursor.pos())
+
+    # Ref: For clipboard https://gist.github.com/ssokolow/b573032b091785ff330d2bdacff91932
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         # print(f"PathBar: eventFilter (event: {QtEventsLookUp[event.type()]})")
         # if obj == self.text and event.type() == QEvent.FocusIn:
         #     self.text.setText(self.device_path)
         # elif obj == self.text and event.type() == QEvent.FocusOut:
         #     self.text.setText(self.device_path)
+        if event.type() == QtCore.QEvent.KeyPress and event == QtGui.QKeySequence.Copy:
+            print(f"PathBar: Copy")
+            clipboard = QApplication.instance().clipboard()
+            clipboard.setText(self.device_path)
+        # if event.type() == QtCore.QEvent.KeyPress and event == QtGui.QKeySequence.Paste:
+        #     print(f"PathBar: Paste")
+        #     clipboard = QApplication.instance().clipboard()
+        #     mimeData = clipboard.mimeData()
+        #     print(clipboard)
+        #     print(clipboard.text())
+        #     # self.b.insertPlainText(text + '\n')
+        #     for format in mimeData.formats():
+        #         print(f'{format}: {mimeData.data(format)}')
+
         return super(PathBar, self).eventFilter(obj, event)
 
     def _clear(self):
