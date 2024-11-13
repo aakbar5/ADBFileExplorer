@@ -17,6 +17,7 @@ from app.helpers.lookup import QtEventsLookUp
 class UploadTools(QToolButton):
     def __init__(self, parent):
         super(UploadTools, self).__init__(parent)
+        self.setIconSize(QtCore.QSize(18, 18))
         self.menu = QMenu(self)
         self.uploader = self.FilesUploader()
 
@@ -127,11 +128,13 @@ class UploadTools(QToolButton):
 class HomeButton(QToolButton):
     def __init__(self, parent):
         super(HomeButton, self).__init__(parent)
-        self.action = QAction(QIcon(Resources.icon_home), 'Home', self)
+        self.icon = QIcon(Resources.icon_home)
+        self.action = QAction(self.icon, 'Home', self)
         self.action.triggered.connect(
             lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_home() else ''
         )
         self.setDefaultAction(self.action)
+        self.setIconSize(QtCore.QSize(18, 18))
 
 
 class RefreshButton(QToolButton):
@@ -143,6 +146,7 @@ class RefreshButton(QToolButton):
             lambda: Global().communicate.files_refresh.emit()
         )
         self.setDefaultAction(self.action)
+        self.setIconSize(QtCore.QSize(18, 18))
 
 
 class UpButton(QToolButton):
@@ -154,6 +158,7 @@ class UpButton(QToolButton):
             lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_up() else ''
         )
         self.setDefaultAction(self.action)
+        self.setIconSize(QtCore.QSize(18, 18))
 
 
 class BackButton(QToolButton):
@@ -164,6 +169,7 @@ class BackButton(QToolButton):
             lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_back() else ''
         )
         self.setDefaultAction(self.action)
+        self.setIconSize(QtCore.QSize(18, 18))
 
 
 class ForwardButton(QToolButton):
@@ -174,6 +180,7 @@ class ForwardButton(QToolButton):
             lambda: Global().communicate.files_refresh.emit() if Adb.worker().check(300) and Adb.manager().go_forward() else ''
         )
         self.setDefaultAction(self.action)
+        self.setIconSize(QtCore.QSize(18, 18))
 
 class PathBar(QWidget):
     def __init__(self, parent: QWidget):
@@ -212,6 +219,7 @@ class PathBar(QWidget):
         self.open_action.triggered.connect(self._open_action)
         self.open.setDefaultAction(self.open_action)
         self.layout().addWidget(self.open)
+        self.open.setIconSize(QtCore.QSize(18, 18))
 
         self.history_menu = QMenu(self)
         self.history_menu.aboutToShow.connect(self._history_menu_populate)
@@ -224,6 +232,7 @@ class PathBar(QWidget):
         self.history.setDefaultAction(self.history_show_action)
         self.history.setMenu(self.history_menu)
         self.layout().addWidget(self.history)
+        self.history.setIconSize(QtCore.QSize(18, 18))
 
         self.layout().setContentsMargins(0, 0, 0, 0)
         Global().communicate.path_toolbar_refresh.connect(self._clear)
