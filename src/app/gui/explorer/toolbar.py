@@ -243,11 +243,11 @@ class PathBar(QWidget):
             self._open_action()
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
-        print(f"PathBar: eventFilter (event: {QtEventsLookUp[event.type()]})")
-        if obj == self.text and event.type() == QEvent.FocusIn:
-            self.text.setText(self.device_path)
-        elif obj == self.text and event.type() == QEvent.FocusOut:
-            self.text.setText(self.device_path)
+        # print(f"PathBar: eventFilter (event: {QtEventsLookUp[event.type()]})")
+        # if obj == self.text and event.type() == QEvent.FocusIn:
+        #     self.text.setText(self.device_path)
+        # elif obj == self.text and event.type() == QEvent.FocusOut:
+        #     self.text.setText(self.device_path)
         return super(PathBar, self).eventFilter(obj, event)
 
     def _clear(self):
