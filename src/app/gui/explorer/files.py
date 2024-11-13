@@ -308,6 +308,8 @@ class FileExplorerWidget(QWidget):
 
         self.tableView.installEventFilter(self)
 
+        self.navigationDict = dict()
+
         # Customize tableview header
         self.tableHeader = self.tableView.horizontalHeader()
         self.tableHeader.setStyleSheet("QHeaderView { font-size: 12pt; }")
@@ -407,15 +409,11 @@ class FileExplorerWidget(QWidget):
             self.tableSortedModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
     def _getSelectedItems(self):
-        # Note: Incase of filter is acitve curr_idx_row
-        # will be different to that of orig_idx_row
-        row_count = self.tableSortedModel.rowCount()
-        curr_idx = self.tableView.currentIndex()
-        curr_idx_row = self.tableView.currentIndex().row()
-        orig_idx_row = self.tableSortedModel.mapToSource(curr_idx).row()
-
-        fileObject = self.tableModel.items[orig_idx_row]
-        return fileObject
+        rowCount = self.tableSortedModel.rowCount()
+        currIdx = self.tableView.currentIndex()
+        origIdx = self.tableSortedModel.mapToSource(currIdx)
+        fileObject = self.tableModel.items[origIdx.row()]
+        return (fileObject, origIdx)
 
     @property
     def file(self):
@@ -477,9 +475,18 @@ class FileExplorerWidget(QWidget):
         if not files:
             self.empty_label.setHidden(False)
         else:
+            print(f"FileExplorerWidget: Refreshed (Path: {Adb.manager().get_current_path()})")
             self.tableView.setHidden(False)
             self.tableModel.populate(files)
             self.tableView.setFocus()
+
+            currPath = Adb.manager().get_current_path()
+            currRowIdx = self.navigationDict.get(currPath, None)
+            if currRowIdx is not None:
+                print(f"FileExplorerWidget: Refreshed -- restore selection")
+                self.tableView.setCurrentIndex(currRowIdx)
+                self.tableView.selectRow(currRowIdx.row())
+                self.navigationDict.pop(currPath)
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         print(f"FileExplorerWidget: eventFilter (event: {QtEventsLookUp[event.type()]})")
@@ -504,11 +511,7 @@ class FileExplorerWidget(QWidget):
         self.open_file()
 
     def onClicked(self, mi):
-        # TODO: Once tableview is showing file list; use mouse to select anything; you
-        # will find that bar is selected and control is coming to this function
-        # at this point, press ENTER key I was hoping to received onEnterKey but it
-        # is not happening.
-        fileObject = self._getSelectedItems()
+        fileObject, _ = self._getSelectedItems()
         print(f"onClicked (focus: {self.tableView.hasFocus()}){fileObject}")
 
     def onDeleteKey(self):
@@ -631,12 +634,13 @@ class FileExplorerWidget(QWidget):
         self.tableView.edit(self.tableView.currentIndex())
 
     def open_file(self):
-        fileObject = self._getSelectedItems()
-        print(f"open_file: {fileObject.path}")
+        currPath = Adb.manager().get_current_path()
+        fileObject, selectedRowIdx = self._getSelectedItems()
+        print(f"open_file # {fileObject.path} (isDir:{fileObject.isdir})")
 
         if fileObject.isdir:
-            print(f"open_file: is_dir")
             if Adb.manager().set_current_path(fileObject):
+                self.navigationDict[currPath] = selectedRowIdx
                 Global().communicate.files_refresh.emit()
         else:
             data, error = FileRepository.open_file(fileObject)
