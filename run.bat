@@ -1,4 +1,11 @@
-call .\venv\Scripts\activate.bat
+@echo off
+
+set APP_HOME=%cd%
+echo =============================
+echo ADBFileExplorer: %APP_HOME%
+
 set PYTHONUNBUFFERED=1
-set PYTHONPATH=%cd%\src\app;%cd%\src;%cd%
-python.exe .\src\app
+call %APP_HOME%\.venv\Scripts\activate.bat
+python %APP_HOME%\src\main.py
+
+@echo on
