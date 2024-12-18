@@ -1,16 +1,19 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 from typing import Any
 
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, QAbstractListModel, QModelIndex, QRect, QVariant, QSize, pyqtSlot
-from PyQt5.QtGui import QPalette, QPixmap, QMovie, QKeySequence
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QStyledItemDelegate, QStyleOptionViewItem, QApplication, \
-    QStyle, QListView, QShortcut
+from PyQt5 import (QtCore, QtGui)
+from PyQt5.QtCore import (pyqtSlot, QAbstractListModel, QModelIndex, QRect, QSize, Qt, QVariant)
+from PyQt5.QtGui import (QKeySequence, QMovie, QPalette, QPixmap)
+from PyQt5.QtWidgets import (QApplication, QLabel, QListView, QShortcut, QStyle,
+                             QStyledItemDelegate, QStyleOptionViewItem, QVBoxLayout,
+                             QWidget)
 
-from app.core.resources import Resources
 from app.core.adb import Adb
 from app.core.managers import Global
+from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import DeviceType, MessageData
 from app.data.repositories import DeviceRepository
 from app.helpers.tools import AsyncRepositoryWorker, read_string_from_file
@@ -74,10 +77,9 @@ class DeviceListModel(QAbstractListModel):
     def data(self, index: QModelIndex, role: int = ...) -> Any:
         if not index.isValid():
             return QVariant()
-
         if role == Qt.DisplayRole:
             return self.items[index.row()]
-        elif role == Qt.DecorationRole:
+        if role == Qt.DecorationRole:
             return QPixmap(self.icon_path(index)).scaled(32, 32, Qt.KeepAspectRatio)
         return QVariant()
 
@@ -151,6 +153,7 @@ class DeviceExplorerWidget(QWidget):
     def device(self):
         if self.list and self.list.currentIndex() is not None:
             return self.model.items[self.list.currentIndex().row()]
+        return None
 
     def _async_response(self, devices, error):
         self.loading_movie.stop()
@@ -161,7 +164,7 @@ class DeviceExplorerWidget(QWidget):
                 MessageData(
                     title='Devices',
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
-                    body="<span style='color: red; font-weight: 600'> %s </span>" % error
+                    body=f"<span style='color: red; font-weight: 600'> {error} </span>"
                 )
             )
         if not devices:
@@ -179,6 +182,6 @@ class DeviceExplorerWidget(QWidget):
                     MessageData(
                         title='Device',
                         timeout=10000,
-                        body="Could not open the device %s" % Adb.manager().get_device().name
+                        body=f"Could not open the device {Adb.manager().get_device().name}"
                     )
                 )

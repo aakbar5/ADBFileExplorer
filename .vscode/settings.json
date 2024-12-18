@@ -1,4 +1,5 @@
 {
+    "editor.rulers": [90],
     "editor.fontFamily": "'Fira Code'",
     "editor.fontLigatures": true,
     "outline.showVariables": false,

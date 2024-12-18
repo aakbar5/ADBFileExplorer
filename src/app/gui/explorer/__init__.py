@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
 from app.core.adb import Adb

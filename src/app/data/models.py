@@ -1,7 +1,9 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import datetime
 import posixpath
+
 from app.core.settings import SettingsOptions, Settings
 
 size_types = (
@@ -65,7 +67,7 @@ class File:
         self.raw_date = kwargs.get("date_time")
 
     def __str__(self):
-        return "%s '%s' (at '%s')" % (self.type, self.name, self.location)
+        return f"{self.type} '{self.name}' (at '{self.location}')"
 
     @property
     def size(self):
@@ -77,7 +79,7 @@ class File:
             result /= 1024
             count += 1
 
-        return '%s %s' % (round(result, 2), size_types[count][1])
+        return f'{round(result, 2)} {size_types[count][1]}'
 
     @property
     def date(self):
@@ -92,27 +94,26 @@ class File:
             return str(created.isoformat())
 
         if date_fmt_type == 'Locale (24 Hours)':
-            format = "%m/%d/%Y %H:%M"
-            return str(created.strftime(format))
+            fmt = "%m/%d/%Y %H:%M"
+            return str(created.strftime(fmt))
 
         if date_fmt_type == 'Locale (12 Hours)':
-            format = "%m/%d/%Y %I:%M %p"
-            return str(created.strftime(format))
+            fmt = "%m/%d/%Y %I:%M %p"
+            return str(created.strftime(fmt))
 
         # Default is informal
         now = datetime.datetime.now()
         if created.year < now.year:
-            return '%s %s %s' % (created.day, months[created.month][1], created.year)
-        elif created.month < now.month:
-            return '%s %s' % (created.day, months[created.month][1])
-        elif created.day + 7 < now.day:
-            return '%s %s' % (created.day, months[created.month][2])
-        elif created.day + 1 < now.day:
-            return '%s at %s' % (days[created.weekday()][1], str(created.time())[:-3])
-        elif created.day < now.day:
-            return "Yesterday at %s" % str(created.time())[:-3]
-        else:
-            return str(created.time())[:-3]
+            return f'{created.day} {months[created.month][1]} {created.year}'
+        if created.month < now.month:
+            return f'{created.day} {months[created.month][1]}'
+        if created.day + 7 < now.day:
+            return f'{created.day} {months[created.month][2]}'
+        if created.day + 1 < now.day:
+            return f'{days[created.weekday()][1]} at {str(created.time())[:-3]}'
+        if created.day < now.day:
+            return f"Yesterday at {str(created.time())[:-3]}"
+        return str(created.time())[:-3]
 
     @property
     def location(self):
@@ -127,7 +128,7 @@ class File:
 
     @property
     def isdir(self):
-        return self.type == FileType.DIRECTORY or self.link_type == FileType.DIRECTORY
+        return self.type in (FileType.DIRECTORY, FileType.DIRECTORY)
 
 
 class FileType:

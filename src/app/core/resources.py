@@ -1,8 +1,8 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
 
-from pkg_resources import resource_filename
 from app.helpers.singleton import Singleton
+from pkg_resources import resource_filename
 
 class Resources:
     __metaclass__ = Singleton

@@ -1,20 +1,22 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QInputDialog, QMenuBar, QMessageBox
 
-from app.core.resources import Resources
-from app.core.settings import SettingsOptions, Settings
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import (QAction, qApp, QInputDialog, QMainWindow, QMenuBar, QMessageBox)
+
 from app.core.adb import Adb
 from app.core.managers import Global
+from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import MessageData, MessageType
 from app.data.repositories import DeviceRepository
 from app.gui.explorer import MainExplorer
 from app.gui.explorer.preference import PerferenceDialog
+from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, AndroidRootWidget, AndroidBatteryWidget
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
-from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, IsAndroidRootWidget, AndroidBatteryWidget
+
 
 class MenuBar(QMenuBar):
     CONNECT_WORKER_ID = 100
@@ -60,21 +62,26 @@ class MenuBar(QMenuBar):
         self.help_menu.addAction(about_action)
 
     def show_perference_dialog(self):
-        perfDlg = PerferenceDialog()
-        perfDlg_ret = perfDlg.exec_()
-        if perfDlg_ret:
-            Settings.set_value(SettingsOptions.ADB_PATH, perfDlg.widget_adb_path.text())
-            Settings.set_value(SettingsOptions.ADB_CORE, perfDlg.widget_adb_core.currentText())
-            Settings.set_value(SettingsOptions.NOTIFICATION_TIMEOUT, perfDlg.widget_notification_timeout.text())
-            Settings.set_value(SettingsOptions.SHOW_WELCOME_MSG, perfDlg.widget_show_welcome.isChecked())
-            Settings.set_value(SettingsOptions.RESTORE_WIN_GEOMETRY, perfDlg.widget_win_geometry.isChecked())
-            Settings.set_value(SettingsOptions.ADB_KILL_AT_EXIT, perfDlg.widget_adb_kill_server_at_exit.isChecked())
-            Settings.set_value(SettingsOptions.PRESERVE_TIMESTAMP, perfDlg.widget_preserve_timestamp.isChecked())
-            Settings.set_value(SettingsOptions.ADB_AS_ROOT, perfDlg.widget_adb_as_root.isChecked())
-            Settings.set_value(SettingsOptions.STATUSBAR_UPDATE_TIME, perfDlg.statusbar_update_time.text())
-            Settings.set_value(SettingsOptions.FILE_DATE_FORMAT, perfDlg.widget_date_format.currentText())
-            Settings.set_value(SettingsOptions.DOWNLOAD_PATH, perfDlg.download_dir_name.text())
-            Settings.set_value(SettingsOptions.ADB_KEY_FILE_PATH, perfDlg.adb_key_file_name.text())
+        perf_dlg = PerferenceDialog()
+        perf_dlg_ret = perf_dlg.exec_()
+        if perf_dlg_ret:
+            Settings.set_value(SettingsOptions.ADB_PATH, perf_dlg.widget_adb_path.text())
+            Settings.set_value(SettingsOptions.ADB_CORE, perf_dlg.widget_adb_core.currentText())
+            Settings.set_value(SettingsOptions.NOTIFICATION_TIMEOUT, perf_dlg.widget_notification_timeout.text())
+            Settings.set_value(SettingsOptions.SHOW_WELCOME_MSG, perf_dlg.widget_show_welcome.isChecked())
+            Settings.set_value(SettingsOptions.RESTORE_WIN_GEOMETRY, perf_dlg.widget_win_geometry.isChecked())
+            Settings.set_value(SettingsOptions.ADB_KILL_AT_EXIT, perf_dlg.widget_adb_kill_server_at_exit.isChecked())
+            Settings.set_value(SettingsOptions.PRESERVE_TIMESTAMP, perf_dlg.widget_preserve_timestamp.isChecked())
+            Settings.set_value(SettingsOptions.ADB_AS_ROOT, perf_dlg.widget_adb_as_root.isChecked())
+            Settings.set_value(SettingsOptions.STATUSBAR_UPDATE_TIME, perf_dlg.statusbar_update_time.text())
+            Settings.set_value(SettingsOptions.FILE_DATE_FORMAT, perf_dlg.widget_date_format.currentText())
+            Settings.set_value(SettingsOptions.DOWNLOAD_PATH, perf_dlg.download_dir_name.text())
+            Settings.set_value(SettingsOptions.ADB_KEY_FILE_PATH, perf_dlg.adb_key_file_name.text())
+            Settings.set_value(SettingsOptions.SORT_FOLDERS_BEFORE_FILES, perf_dlg.widget_sort_folders_before_file.isChecked())
+            Settings.set_value(SettingsOptions.HEADER_PERMISSION, perf_dlg.header_permission.isChecked())
+            Settings.set_value(SettingsOptions.HEADER_SIZE, perf_dlg.header_size.isChecked())
+            Settings.set_value(SettingsOptions.HEADER_DATE, perf_dlg.header_date.isChecked())
+            Settings.set_value(SettingsOptions.HEADER_MIME_TYPE, perf_dlg.header_mime_type.isChecked())
             Global().communicate.files_refresh.emit()
 
     def disconnect(self):
@@ -94,7 +101,7 @@ class MenuBar(QMenuBar):
                     message_catcher=worker.set_loading_widget
                 )
             )
-            Global().communicate.status_bar_general.emit('Operation: %s... Please wait.' % worker.name, 3000)
+            Global().communicate.status_bar_general.emit(f'Operation: {worker.name}... Please wait.', 3000)
             worker.start()
 
     def connect_device(self):
@@ -118,7 +125,7 @@ class MenuBar(QMenuBar):
                         message_catcher=worker.set_loading_widget
                     )
                 )
-                Global().communicate.status_bar_general.emit('Operation: %s... Please wait.' % worker.name, 3000)
+                Global().communicate.status_bar_general.emit(f'Operation: {worker.name}... Please wait.', 3000)
                 worker.start()
 
     @staticmethod
@@ -138,7 +145,7 @@ class MenuBar(QMenuBar):
                 MessageData(
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Disconnect",
-                    body="<span style='color: red; font-weight: 600'></span>" % error
+                    body=f"<span style='color: red; font-weight: 600'>{error}</span>"
                 )
             )
         Global().communicate.status_bar_general.emit('Operation: Disconnecting finished.', 3000)
@@ -157,7 +164,7 @@ class MenuBar(QMenuBar):
                 MessageData(
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Connect to device",
-                    body="<span style='color: red; font-weight: 600'>%s</span>" % error
+                    body=f"<span style='color: red; font-weight: 600'>{error}</span>"
                 )
             )
         Global().communicate.status_bar_general.emit('Operation: Connecting to device finished.', 3000)
@@ -187,14 +194,18 @@ class MainWindow(QMainWindow):
         self.status_bar_battery = AndroidBatteryWidget()
         self.status_bar.addPermanentWidget(self.status_bar_battery)
 
-        self.status_bar_root = IsAndroidRootWidget()
+        self.status_bar_root = AndroidRootWidget()
         self.status_bar.addPermanentWidget(self.status_bar_root)
 
-        # Show Devices Widget
+        # Show devices widget
         Global().communicate.devices.emit()
 
         # Connect to Global class to use it anywhere
         Global().communicate.status_bar_general.connect(self.status_bar.showMessage)
+
+        # Connect to device connect/disconnection
+        Global().communicate.device_connect.connect(self.device_connect)
+        Global().communicate.device_disconnect.connect(self.device_disconnect)
 
         # Important to add last to stay on top!
         self.notification_center = NotificationCenter(self)
@@ -203,14 +214,26 @@ class MainWindow(QMainWindow):
         if Settings.get_value(SettingsOptions.SHOW_WELCOME_MSG):
             # Welcome notification texts
             welcome_title = "Welcome to ADBFileExplorer!"
-            welcome_body = "Here you can see the list of your connected adb devices. Click one of them to see files.<br/>"\
-                        "Current selected core: <strong>%s</strong><br/>" \
-                        "To change it - <code style='color: blue'>settings.json</code> file" % Settings.get_value(SettingsOptions.ADB_CORE)
+            welcome_body = f'''Here you can see the list of your connected adb devices. Click one of them to see files.<br/>
+                        Current selected core: <strong>{Settings.get_value(SettingsOptions.ADB_CORE)}</strong><br/>
+                        To change it - <code style='color: blue'>settings.json</code> file'''
 
         Global().communicate.status_bar_general.emit('Ready', 5000)
 
         if Settings.get_value(SettingsOptions.SHOW_WELCOME_MSG):
             Global().communicate.notification.emit(MessageData(title=welcome_title, body=welcome_body, timeout=30000))
+
+    def device_connect(self):
+        self.status_bar_device_label.setVisible(True)
+        self.status_bar_android_version.setVisible(True)
+        self.status_bar_battery.setVisible(True)
+        self.status_bar_root.setVisible(True)
+
+    def device_disconnect(self):
+        self.status_bar_device_label.setVisible(False)
+        self.status_bar_android_version.setVisible(False)
+        self.status_bar_battery.setVisible(False)
+        self.status_bar_root.setVisible(False)
 
     def notify(self, data: MessageData):
         message = self.notification_center.append_notification(

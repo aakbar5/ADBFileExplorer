@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import logging
 import posixpath
 import os
@@ -27,10 +28,9 @@ class ADBManager:
         if not path or len(path) == 0:
             return ADBManager.default_path
 
-        path = os.path.normcase(path)
         path = posixpath.normpath(path)
 
-        # On Windows normcase, can path to / to \ so
+        # Make sure that all / to \, especially for Windows
         path = path.replace('\\','/')
 
         if not path.endswith("/"):
@@ -57,11 +57,11 @@ class ADBManager:
 
     @classmethod
     def is_back(cls) -> bool:
-        return cls.__pathIndex > 0;
+        return cls.__pathIndex > 0
 
     @classmethod
     def is_forward(cls) -> bool:
-        return cls.__pathIndex < len(cls.__paths) - 1;
+        return cls.__pathIndex < len(cls.__paths) - 1
 
     @classmethod
     def go_forward(cls) -> str:
@@ -77,7 +77,7 @@ class ADBManager:
             return None
 
         cls.__pathIndex -= 1
-        return cls.__paths[cls.__pathIndex];
+        return cls.__paths[cls.__pathIndex]
 
     @classmethod
     def go_home(cls) -> str:
@@ -113,7 +113,7 @@ class ADBManager:
         new_path = ADBManager.default_path
 
         if not file:
-            print(f"set_current_path: file object is not valid")
+            print("set_current_path: file object is not valid")
             return new_path
 
         if isinstance(file, File):
@@ -149,6 +149,7 @@ class ADBManager:
             cls.clear_device()
             cls.__device = device
             return True
+        return False
 
     @classmethod
     def clear_device(cls):
@@ -162,15 +163,15 @@ class PythonADBManager(ADBManager):
 
     @classmethod
     def connect(cls, device_id: str) -> str:
-        if device_id.__contains__('.'):
+        if '.' in device_id:
             port = 5555
             host = device_id
-            if device_id.__contains__(':'):
+            if ':' in device_id:
                 host = device_id.split(':')[0]
                 port = device_id.split(':')[1]
             cls.device = AdbDeviceTcp(host=host, port=port, default_transport_timeout_s=10.)
             cls.device.connect(rsa_keys=[cls.signer], auth_timeout_s=1.)
-            return '%s:%s' % (host, port)
+            return f'{host}:{port}'
 
         cls.device = AdbDeviceUsb(serial=device_id, default_transport_timeout_s=3.)
         cls.device.connect(rsa_keys=[cls.signer], auth_timeout_s=30.)
@@ -186,7 +187,7 @@ class PythonADBManager(ADBManager):
             except BaseException as error:
                 logging.error(error)
                 return False
-
+        return False
 
 class WorkersManager:
     """
@@ -214,7 +215,6 @@ class WorkersManager:
             if worker.id == worker_id:
                 if worker.closed:
                     return True
-                return False
         return False
 
 

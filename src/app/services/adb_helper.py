@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 from app.core.settings import SettingsOptions, Settings
 from app.helpers.tools import CommonProcess
 
@@ -51,7 +52,7 @@ class ShellCommand:
 
 
 def validate():
-    return version().IsSuccessful
+    return version().is_okay
 
 
 def version():

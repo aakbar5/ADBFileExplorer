@@ -11,9 +11,17 @@
             "program": "src/main.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {
-                "PYTHONUNBUFFERED": "1",
-                "QT_QPA_PLATFORM": "xcb",
+            "windows": {
+                "env": {
+                    "PYTHONUNBUFFERED": "1",
+
+                }
+            },
+            "linux": {
+                "env": {
+                    "PYTHONUNBUFFERED": "1",
+                    "QT_QPA_PLATFORM": "xcb"
+                }
             }
         }
     ]

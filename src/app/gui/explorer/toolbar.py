@@ -1,19 +1,21 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
-from PyQt5.QtWidgets import QApplication
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QObject, QEvent, QSize
-from PyQt5.QtGui import QIcon, QClipboard, QCursor
-from PyQt5.QtWidgets import QToolButton, QMenu, QWidget, QAction, QShortcut, QFileDialog, QInputDialog, QLineEdit, QHBoxLayout
 
-from app.core.resources import Resources
-from app.core.settings import SettingsOptions, Settings
+from PyQt5 import (QtCore, QtGui)
+from PyQt5.QtCore import (QEvent, QObject)
+from PyQt5.QtGui import (QIcon, QCursor)
+from PyQt5.QtWidgets import (QAction, QApplication, QFileDialog, QHBoxLayout,
+                             QInputDialog, QLineEdit, QMenu, QToolButton, QWidget)
+
 from app.core.adb import Adb
 from app.core.managers import Global
+from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import MessageData, MessageType
 from app.data.repositories import FileRepository
-from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper
 from app.helpers.lookup import QtEventsLookUp
+from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper
+
 
 class UploadTools(QToolButton):
     def __init__(self, parent):
@@ -63,7 +65,7 @@ class UploadTools(QToolButton):
                     MessageData(
                         timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         title="Creating folder",
-                        body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                        body=f"<span style='color: red; font-weight: 600'> {error} </span>",
                     )
                 )
             if data:
@@ -113,7 +115,7 @@ class UploadTools(QToolButton):
                     MessageData(
                         timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         title='Upload error',
-                        body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                        body=f"<span style='color: red; font-weight: 600'> {error} </span>",
                     )
                 )
             if data:
@@ -248,39 +250,24 @@ class PathBar(QWidget):
     def context_menu(self):
         menu = QMenu(self)
 
-        actionCopy = QAction(QtGui.QIcon.fromTheme("edit-copy"), "Copy")
-        actionCopy.setShortcut(QtGui.QKeySequence.Copy)
-        actionCopy.triggered.connect(lambda: QApplication.instance().clipboard().setText(self.device_path))
+        action_copy = QAction(QtGui.QIcon.fromTheme("edit-copy"), "Copy")
+        action_copy.setShortcut(QtGui.QKeySequence.Copy)
+        action_copy.triggered.connect(lambda: QApplication.instance().clipboard().setText(self.device_path))
 
-        actionPaste = QAction(QtGui.QIcon.fromTheme("edit-paste"), "Paste")
-        actionPaste.setShortcut(QtGui.QKeySequence.Paste)
-        actionPaste.triggered.connect(lambda: print("Paste"))
-        actionPaste.setEnabled(False)
+        action_paste = QAction(QtGui.QIcon.fromTheme("edit-paste"), "Paste")
+        action_paste.setShortcut(QtGui.QKeySequence.Paste)
+        action_paste.triggered.connect(lambda: print("Paste"))
+        action_paste.setEnabled(False)
 
-        menu.addAction(actionCopy)
-        menu.addAction(actionPaste)
+        menu.addAction(action_copy)
+        menu.addAction(action_paste)
         menu.exec_(QCursor.pos())
 
-    # Ref: For clipboard https://gist.github.com/ssokolow/b573032b091785ff330d2bdacff91932
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
         # print(f"PathBar: eventFilter (event: {QtEventsLookUp[event.type()]})")
-        # if obj == self.text and event.type() == QEvent.FocusIn:
-        #     self.text.setText(self.device_path)
-        # elif obj == self.text and event.type() == QEvent.FocusOut:
-        #     self.text.setText(self.device_path)
         if event.type() == QtCore.QEvent.KeyPress and event == QtGui.QKeySequence.Copy:
-            print(f"PathBar: Copy")
             clipboard = QApplication.instance().clipboard()
             clipboard.setText(self.device_path)
-        # if event.type() == QtCore.QEvent.KeyPress and event == QtGui.QKeySequence.Paste:
-        #     print(f"PathBar: Paste")
-        #     clipboard = QApplication.instance().clipboard()
-        #     mimeData = clipboard.mimeData()
-        #     print(clipboard)
-        #     print(clipboard.text())
-        #     # self.b.insertPlainText(text + '\n')
-        #     for format in mimeData.formats():
-        #         print(f'{format}: {mimeData.data(format)}')
 
         return super(PathBar, self).eventFilter(obj, event)
 
@@ -310,7 +297,7 @@ class PathBar(QWidget):
                 MessageData(
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                     title="Opening folder",
-                    body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                    body=f"<span style='color: red; font-weight: 600'> {error} </span>",
                 )
             )
         elif file and Adb.manager().set_current_path(file):
@@ -333,39 +320,39 @@ class SearchBar(QWidget):
         self.text = QLineEdit(self)
         self.text.setStyleSheet("padding: 5;")
         self.text.setText("")
-        self.text.textEdited.connect(self._textUpdate)
-        self.text.returnPressed.connect(self._textEnter)
+        self.text.textEdited.connect(self._text_update)
+        self.text.returnPressed.connect(self._text_enter)
         self.layout().addWidget(self.text)
 
-        self.caseSensitivity = QToolButton(self)
-        self.caseSensitivity.setStyleSheet("padding: 4;")
+        self.case_sensitivity_btn = QToolButton(self)
+        self.case_sensitivity_btn.setStyleSheet("padding: 4;")
 
-        self.caseSensitivityVal = True
-        self.caseSensitivity.setDown(self.caseSensitivityVal)
+        self.case_sensitivity_val = True
+        self.case_sensitivity_btn.setDown(self.case_sensitivity_val)
 
-        self.caseSensitivityAction = QAction(QIcon(Resources.icon_search_case_sensitive), 'Case Sensitive', self)
-        self.caseSensitivityAction.triggered.connect(self._changeCaseSentivity)
-        self.caseSensitivity.setDefaultAction(self.caseSensitivityAction)
+        self.case_sensitivity_action = QAction(QIcon(Resources.icon_search_case_sensitive), 'Case Sensitive', self)
+        self.case_sensitivity_action.triggered.connect(self._change_case_sentivity)
+        self.case_sensitivity_btn.setDefaultAction(self.case_sensitivity_action)
 
-        self.layout().addWidget(self.caseSensitivity)
+        self.layout().addWidget(self.case_sensitivity_btn)
 
         self.layout().setContentsMargins(0, 0, 0, 0)
-        Global().communicate.searchCaseUpdate.emit(self.caseSensitivityVal)
+        Global().communicate.search_case_update.emit(self.case_sensitivity_val)
 
-    def _textUpdate(self, text: str):
+    def _text_update(self, text: str):
         print("SearchBar: text field is updated -> ", text)
-        Global().communicate.searchTextUpdate.emit(text)
+        Global().communicate.search_text_update.emit(text)
 
-    def _textEnter(self):
+    def _text_enter(self):
         text = self.text.text()
         self.text.clear()
         print("SearchBar: text field is entered -> ", text)
-        Global().communicate.searchTextUpdate.emit(text)
+        Global().communicate.search_text_update.emit(text)
 
-    def _changeCaseSentivity(self):
-        if self.caseSensitivityVal:
-            self.caseSensitivityVal = False
+    def _change_case_sentivity(self):
+        if self.case_sensitivity_val:
+            self.case_sensitivity_val = False
         else:
-            self.caseSensitivityVal = True
-        self.caseSensitivity.setDown(self.caseSensitivityVal)
-        Global().communicate.searchCaseUpdate.emit(self.caseSensitivityVal)
+            self.case_sensitivity_val = True
+        self.case_sensitivity_btn.setDown(self.case_sensitivity_val)
+        Global().communicate.search_case_update.emit(self.case_sensitivity_val)

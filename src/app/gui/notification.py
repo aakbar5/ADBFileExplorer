@@ -1,12 +1,15 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 from typing import Union
 
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, QTimer, QPoint, QSize, QPropertyAnimation, QAbstractAnimation, QObject
-from PyQt5.QtGui import QIcon, QPaintEvent, QPainter, QMovie
-from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QPushButton, QStyleOption, QStyle, \
-    QGraphicsDropShadowEffect, QVBoxLayout, QScrollArea, QSizePolicy, QFrame, QGraphicsOpacityEffect, QProgressBar
+from PyQt5 import (QtCore, QtGui)
+from PyQt5.QtCore import (QAbstractAnimation, QObject, QPoint,
+                          QPropertyAnimation, QSize, Qt, QTimer)
+from PyQt5.QtGui import (QIcon, QMovie, QPainter, QPaintEvent)
+from PyQt5.QtWidgets import (QFrame, QGraphicsDropShadowEffect, QGraphicsOpacityEffect,
+                             QHBoxLayout, QLabel, QProgressBar, QPushButton, QScrollArea,
+                             QSizePolicy, QStyle, QStyleOption, QVBoxLayout, QWidget)
 
 from app.core.resources import Resources
 from app.data.models import MessageType
@@ -195,7 +198,6 @@ class NotificationCenter(QScrollArea):
         if obj == self.notifications and event.type() == event.Resize:
             if self.maximumHeight() > self.rect().height() < event.size().height():
                 self.resize(self.rect().width(), event.size().height() + self.notifications.layout().spacing())
-
         return super(NotificationCenter, self).eventFilter(obj, event)
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
@@ -218,10 +220,11 @@ class NotificationCenter(QScrollArea):
             message = Message(self, title, body, timeout)
             self.append(message)
             return message
-        elif message_type == MessageType.LOADING_MESSAGE:
+        if message_type == MessageType.LOADING_MESSAGE:
             message = LoadingMessage(self, title, body)
             self.append(message)
             return message
+        return None
 
     def append(self, message: BaseMessage):
         self.notifications.layout().addWidget(message)

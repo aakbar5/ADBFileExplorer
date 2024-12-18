@@ -1,8 +1,8 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import os
 
-from PyQt5.QtCore import QSettings
 from PyQt5.QtCore import QSettings, QPoint, QSize
 
 from app.helpers.singleton import Singleton
@@ -22,6 +22,11 @@ class SettingsOptions:
     STATUSBAR_UPDATE_TIME = 'statusbar_update_time'
     FILE_DATE_FORMAT = 'file_date_format'
     ADB_KEY_FILE_PATH = 'adb_key_file_path'
+    SORT_FOLDERS_BEFORE_FILES = 'sort_folders_before_files'
+    HEADER_PERMISSION = 'header_permission'
+    HEADER_SIZE = 'header_size'
+    HEADER_DATE = 'header_date'
+    HEADER_MIME_TYPE = 'header_mime_type'
 
 class Settings(metaclass=Singleton):
     settings_ = None
@@ -77,19 +82,30 @@ class Settings(metaclass=Singleton):
         if not cls.settings_.contains(SettingsOptions.ADB_KEY_FILE_PATH):
             cls.settings_.setValue(SettingsOptions.ADB_KEY_FILE_PATH, adb_key_file)
 
+        if not cls.settings_.contains(SettingsOptions.SORT_FOLDERS_BEFORE_FILES):
+            cls.settings_.setValue(SettingsOptions.SORT_FOLDERS_BEFORE_FILES, True)
+
+        if not cls.settings_.contains(SettingsOptions.HEADER_PERMISSION):
+            cls.settings_.setValue(SettingsOptions.HEADER_PERMISSION, True)
+
+        if not cls.settings_.contains(SettingsOptions.HEADER_SIZE):
+            cls.settings_.setValue(SettingsOptions.HEADER_SIZE, True)
+
+        if not cls.settings_.contains(SettingsOptions.HEADER_DATE):
+            cls.settings_.setValue(SettingsOptions.HEADER_DATE, True)
+
+        if not cls.settings_.contains(SettingsOptions.HEADER_MIME_TYPE):
+            cls.settings_.setValue(SettingsOptions.HEADER_MIME_TYPE, True)
+
     @classmethod
     def to_bool(cls, value):
-        if type(value) is str:
-            if value == 'true':
+        if isinstance(value, str):
+            if value.lower() == 'true':
                 return True
-            elif value == 'True':
-                return True
-            else:
-                return False
-        elif value is None:
             return False
-        else:
-            return value
+        if value is None:
+            return False
+        return value
 
     @classmethod
     def set_value(cls, key, value):
@@ -101,17 +117,17 @@ class Settings(metaclass=Singleton):
         raw_value = cls.settings_.value(key)
         if key == SettingsOptions.ADB_PATH:
             return str(raw_value)
-        elif key == SettingsOptions.ADB_CORE:
+        if key == SettingsOptions.ADB_CORE:
             return str(raw_value)
-        elif key == SettingsOptions.ADB_AS_ROOT:
+        if key == SettingsOptions.ADB_AS_ROOT:
             return cls.to_bool(raw_value)
-        elif key == SettingsOptions.ADB_KILL_AT_EXIT:
+        if key == SettingsOptions.ADB_KILL_AT_EXIT:
             return cls.to_bool(raw_value)
-        elif key == SettingsOptions.PRESERVE_TIMESTAMP:
+        if key == SettingsOptions.PRESERVE_TIMESTAMP:
             return cls.to_bool(raw_value)
-        elif key == SettingsOptions.NOTIFICATION_TIMEOUT:
+        if key == SettingsOptions.NOTIFICATION_TIMEOUT:
             return int(raw_value)
-        elif key == SettingsOptions.DOWNLOAD_PATH:
+        if key == SettingsOptions.DOWNLOAD_PATH:
             if not os.path.isdir(raw_value):
                 os.mkdir(raw_value)
             if device:
@@ -120,19 +136,28 @@ class Settings(metaclass=Singleton):
                     os.mkdir(downloads_path)
                 return downloads_path
             return raw_value
-        elif key == SettingsOptions.SHOW_WELCOME_MSG:
+        if key == SettingsOptions.SHOW_WELCOME_MSG:
             return cls.to_bool(raw_value)
-        elif key == SettingsOptions.RESTORE_WIN_GEOMETRY:
+        if key == SettingsOptions.RESTORE_WIN_GEOMETRY:
             return cls.to_bool(raw_value)
-        elif key == SettingsOptions.WIN_SIZE:
+        if key == SettingsOptions.WIN_SIZE:
             return QSize(raw_value)
-        elif key == SettingsOptions.WIN_POS:
+        if key == SettingsOptions.WIN_POS:
             return QPoint(raw_value)
-        elif key == SettingsOptions.STATUSBAR_UPDATE_TIME:
+        if key == SettingsOptions.STATUSBAR_UPDATE_TIME:
             return int(raw_value)
-        elif key == SettingsOptions.FILE_DATE_FORMAT:
+        if key == SettingsOptions.FILE_DATE_FORMAT:
             return str(raw_value)
-        elif key == SettingsOptions.ADB_KEY_FILE_PATH:
+        if key == SettingsOptions.ADB_KEY_FILE_PATH:
             return str(raw_value)
-        else:
-            return raw_value
+        if key == SettingsOptions.SORT_FOLDERS_BEFORE_FILES:
+            return cls.to_bool(raw_value)
+        if key == SettingsOptions.HEADER_PERMISSION:
+            return cls.to_bool(raw_value)
+        if key == SettingsOptions.HEADER_SIZE:
+            return cls.to_bool(raw_value)
+        if key == SettingsOptions.HEADER_DATE:
+            return cls.to_bool(raw_value)
+        if key == SettingsOptions.HEADER_MIME_TYPE:
+            return cls.to_bool(raw_value)
+        return raw_value
