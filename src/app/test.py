@@ -26,11 +26,12 @@
 #     files = device.list('/sdcard/Download/')
 #     for file in files:
 #         print(file)
+
 import sys
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout
 
-from data.models import MessageType
+from app.data.models import MessageType
 from app.gui.notification import NotificationCenter
 
 

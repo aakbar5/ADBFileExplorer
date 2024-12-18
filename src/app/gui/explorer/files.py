@@ -1,42 +1,32 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import sys
 import os
 from typing import Any
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import (
-    Qt, QObject,
-    QModelIndex, QAbstractTableModel, QSortFilterProxyModel,
-    QVariant,
-    QRect, QSize, QEvent, QPoint
-)
-from PyQt5.QtGui import (
-    QFont, QColor, QPalette,
-    QPixmap, QMovie,
-    QKeySequence
-)
-from PyQt5.QtWidgets import (
-    QMenu, QAction, QShortcut,
-    QWidget, QMessageBox, QFileDialog, QInputDialog,
-    QStyledItemDelegate, QStyleOptionViewItem,
-    QMainWindow, QTableView, QListView, QLabel, QTextEdit,
-    QVBoxLayout, QSizePolicy, QHBoxLayout, QHeaderView,
-    QAbstractScrollArea
-)
+from PyQt5 import (QtCore, QtGui)
+from PyQt5.QtCore import (QAbstractTableModel, QEvent, QModelIndex,
+                          QObject, QPoint, QRect, QSize, QSortFilterProxyModel, Qt)
+from PyQt5.QtGui import (QColor, QFont, QMovie, QPixmap)
+from PyQt5.QtWidgets import (QAction, QFileDialog, QHBoxLayout, QHeaderView,
+                             QInputDialog, QLabel, QMainWindow, QMenu, QMessageBox,
+                             QShortcut, QSizePolicy, QStyledItemDelegate,
+                             QStyleOptionViewItem, QTableView, QTextEdit,
+                             QVBoxLayout, QWidget)
 
-from app.core.resources import Resources
-from app.core.settings import SettingsOptions, Settings
 from app.core.adb import Adb
 from app.core.managers import Global
+from app.core.resources import Resources
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import FileType, MessageData, MessageType
 from app.data.repositories import FileRepository
-from app.gui.explorer.toolbar import UpButton, UploadTools, PathBar, HomeButton, RefreshButton, BackButton, ForwardButton, SearchBar
-from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper, read_string_from_file
 from app.gui.explorer.statusbar import DeviceStatusThread
-from app.helpers.lookup import QtEventsLookUp
+from app.gui.explorer.toolbar import UpButton, UploadTools, PathBar, HomeButton, RefreshButton, BackButton, ForwardButton, SearchBar
+from app.helpers.lookup import QtEventsLookUp, MimeTypesLookUp
+from app.helpers.tools import AsyncRepositoryWorker, ProgressCallbackHelper
 
-HEADER = ['File', 'Permissions', 'Size', 'Date']
+HEADER = ['File', 'Permissions', 'Size', 'Date', 'MimeType']
 
 
 class FileExplorerToolbar(QWidget):
@@ -90,7 +80,7 @@ class FileItemDelegate(QStyledItemDelegate):
     def setEditorData(self, editor: QWidget, index: QtCore.QModelIndex):
         editor.setText(index.model().data(index, Qt.EditRole))
 
-    def updateEditorGeometry(self, editor: QWidget, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex):
+    def updateEditorGeometry(self, editor: QWidget, option: 'QStyleOptionViewItem', _index: QtCore.QModelIndex):
         editor.setGeometry(
             option.rect.left() + 48, option.rect.top(), int(option.rect.width() / 2.5) - 55, option.rect.height()
         )
@@ -108,51 +98,42 @@ class FileItemDelegate(QStyledItemDelegate):
         painter.setPen(color)
         painter.drawText(QRect(x, y, w, h), options, text)
 
-    # def paint(self, painter: QtGui.QPainter, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex):
-    #     if not index.data():
-    #         return super(FileItemDelegate, self).paint(painter, option, index)
+class CustomSortModel(QSortFilterProxyModel):
+    def __init__(self):
+        super(CustomSortModel, self).__init__()
 
-    #     self.initStyleOption(option, index)
-    #     style = option.widget.style() if option.widget else QApplication.style()
-    #     style.drawControl(QStyle.CE_ItemViewItem, option, painter, option.widget)
+    def lessThan(self, left, right):
+        # left is of type # PyQt5.QtCore.QModelIndex
 
-    #     line_color = QColor("#CCCCCC")
-    #     text_color = option.palette.color(QPalette.Normal, QPalette.Text)
+        # Get items
+        items = self.sourceModel().items
 
-    #     top = option.rect.top()
-    #     bottom = option.rect.height()
+        # Extract file objects
+        left_file_object = items[left.row()]
+        right_file_object = items[right.row()]
 
-    #     first_start = option.rect.left() + 50
-    #     second_start = option.rect.left() + int(option.rect.width() / 2.5)
-    #     third_start = option.rect.left() + int(option.rect.width() / 1.75)
-    #     fourth_start = option.rect.left() + int(option.rect.width() / 1.25)
-    #     end = option.rect.width() + option.rect.left()
+        # Extract file names
+        left_text = left_file_object.name
+        right_text = right_file_object.name
 
-    #     self.paint_text(
-    #         painter, index.data().name, text_color, option.displayAlignment,
-    #         first_start, top, second_start - first_start - 4, bottom
-    #     )
+        # Check whether these are directories or not
+        left_is_dir = left_file_object.isdir
+        right_is_dir = right_file_object.isdir
 
-    #     self.paint_line(painter, line_color, second_start - 2, top, second_start - 1, bottom)
+        # Sort directories above files
+        if Settings.get_value(SettingsOptions.SORT_FOLDERS_BEFORE_FILES) is True:
+            if left_is_dir:
+                if not right_is_dir:
+                    return True if self.sortOrder() == Qt.AscendingOrder else False
+            elif right_is_dir:
+                return False if self.sortOrder() == Qt.AscendingOrder else True
 
-    #     self.paint_text(
-    #         painter, index.data().permissions, text_color, Qt.AlignCenter | option.displayAlignment,
-    #         second_start, top, third_start - second_start - 4, bottom
-    #     )
+        # Sort items of the same type (file or directory) lexicographically.
+        if left_text.lower() < right_text.lower():
+            return True
+        else:
+            return False
 
-    #     self.paint_line(painter, line_color, third_start - 2, top, third_start - 1, bottom)
-
-    #     self.paint_text(
-    #         painter, index.data().size, text_color, Qt.AlignCenter | option.displayAlignment,
-    #         third_start, top, fourth_start - third_start - 4, bottom
-    #     )
-
-    #     self.paint_line(painter, line_color, fourth_start - 2, top, fourth_start - 1, bottom)
-
-    #     self.paint_text(
-    #         painter, index.data().date, text_color, Qt.AlignCenter | option.displayAlignment,
-    #         fourth_start, top, end - fourth_start, bottom
-    #     )
 
 # Creating the table model
 class TableViewModel(QAbstractTableModel):
@@ -172,50 +153,56 @@ class TableViewModel(QAbstractTableModel):
         self.endResetModel()
 
     def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
-                return HEADER[section]
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return HEADER[section]
+        return None
 
     def data(self, index, role):
-        row = index.row()
         col = index.column()
 
-        # fileObject is of type app.data.models.File
-        fileObject = self.items[index.row()]
-        # print(f"loc={row}x{col}: {fileObject}")
+        # file_object is of type app.data.models.File
+        file_object = self.items[index.row()]
+        # print(f"loc={row}x{col}: {file_object}")
 
         if role == Qt.DisplayRole or role == Qt.EditRole:
             if col == 0:
-                return fileObject.name
-            elif col == 1:
-                return fileObject.permissions
-            elif col == 2:
-                return fileObject.size
-            elif col == 3:
-                return fileObject.date
-        elif role == Qt.DecorationRole and col == 0:
-            return QPixmap(self.icon(fileObject)).scaled(32, 32, Qt.KeepAspectRatio)
-        elif role == Qt.FontRole and col == 1:
+                return file_object.name
+            if col == 1:
+                return file_object.permissions
+            if col == 2:
+                return file_object.size
+            if col == 3:
+                return file_object.date
+            if col == 4:
+                file_type = file_object.type
+                if file_type == FileType.DIRECTORY:
+                    return ""
+                if file_type == FileType.FILE:
+                    ext = os.path.splitext(file_object.name)[1]
+                    if ext in MimeTypesLookUp.keys():
+                        return MimeTypesLookUp[ext]
+                    return ""
+        if role == Qt.DecorationRole and col == 0:
+            return QPixmap(self.icon(file_object)).scaled(32, 32, Qt.KeepAspectRatio)
+        if role == Qt.FontRole and col == 1:
             font = QFont("monospace")
             font.setStyleHint(QFont.Monospace)
-            return font;
+            return font
+        return None
 
     def setData(self, index: QModelIndex, value: Any, role: int = ...) -> bool:
-        row = index.row()
-        col = index.column()
-        fileObject = self.items[index.row()]
+        file_object = self.items[index.row()]
 
         if role == Qt.EditRole and value:
-            print(f"setData: {fileObject.name} -> {value}")
-            if fileObject.name != value:
-                print(f"  rename object")
-                data, error = FileRepository.rename(fileObject, value)
+            print(f"setData: {file_object.name} -> {value}")
+            if file_object.name != value:
+                _, error = FileRepository.rename(file_object, value)
                 if error:
                     Global().communicate.notification.emit(
                         MessageData(
                             timeout=10000,
                             title="Rename",
-                            body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                            body=f"<span style='color: red; font-weight: 600'> {error} </span>",
                         )
                     )
                 Global.communicate.files_refresh.emit()
@@ -231,29 +218,29 @@ class TableViewModel(QAbstractTableModel):
 
         return flags
 
-    def icon(self, fileObject):
-        file_type = fileObject.type
+    def icon(self, file_object):
+        file_type = file_object.type
         if file_type == FileType.DIRECTORY:
             return Resources.icon_folder
-        elif file_type == FileType.FILE:
-            ext = os.path.splitext(fileObject.name)[1]
-            if ext in Resources.icons_files.keys():
+        if file_type == FileType.FILE:
+            ext = os.path.splitext(file_object.name)[1]
+            if ext in Resources.icons_files:
                 return Resources.icons_files[ext]
-            else:
-                return Resources.icon_file
-        elif file_type == FileType.LINK:
-            link_type = fileObject.link_type
+            return Resources.icon_file
+
+        if file_type == FileType.LINK:
+            link_type = file_object.link_type
             if link_type == FileType.DIRECTORY:
                 return Resources.icon_link_folder
-            elif link_type == FileType.FILE:
+            if link_type == FileType.FILE:
                 return Resources.icon_link_file
             return Resources.icon_link_file_unknown
         return Resources.icon_file_unknown
 
-    def columnCount(self, parent):
+    def columnCount(self, _parent):
         return len(HEADER)
 
-    def rowCount(self, parent):
+    def rowCount(self, _parent):
         return len(self.items)
 
     def insertRows(self, position, rows, parent=QModelIndex()):
@@ -278,57 +265,72 @@ class FileExplorerWidget(QWidget):
 
         #-- Tableview
         # Create the model for the QTableView
-        self.tableModel = TableViewModel()
+        self.table_model = TableViewModel()
 
         # Create the sorter model
-        self.tableSortedModel = QSortFilterProxyModel()
-        self.tableSortedModel.setSourceModel(self.tableModel)
-        self.tableSortedModel.setFilterKeyColumn(0)
-        Global().communicate.searchTextUpdate.connect(self._changeSearchText)
-        Global().communicate.searchCaseUpdate.connect(self._changeSearchCaseSensitivity)
+        # self.table_sorting_model = QSortFilterProxyModel()
+        self.table_sorting_model = CustomSortModel()
+        self.table_sorting_model.setSourceModel(self.table_model)
+        self.table_sorting_model.setFilterKeyColumn(0)
+        Global().communicate.search_text_update.connect(self._change_search_text)
+        Global().communicate.search_case_update.connect(self._change_search_case_sensitivity)
 
         # Setup the QTableView to enable sorting
-        self.tableView = QTableView()
-        self.tableView.setWindowTitle('File listing...')
-        self.tableView.setModel(self.tableSortedModel)
-        self.tableView.setSortingEnabled(True)
-        self.tableView.sortByColumn(0, Qt.AscendingOrder)
-        self.tableView.doubleClicked.connect(self.onDoubleClicked)
-        self.tableView.clicked.connect(self.onClicked)
-        self.tableView.setSelectionBehavior(QTableView.SelectRows)
-        self.tableView.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableView.customContextMenuRequested.connect(self.context_menu)
-        self.tableView.setItemDelegate(FileItemDelegate(self.tableView))
-        self.tableView.setStyleSheet('font-size: 16px;')
-        # self.tableView.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
-        # self.tableView.resizeColumnsToContents()
+        self.table_view = QTableView()
+        self.table_view.setWindowTitle('File listing...')
+        self.table_view.setModel(self.table_sorting_model)
+        self.table_view.setSortingEnabled(True)
+        self.table_view.sortByColumn(0, Qt.AscendingOrder)
+        self.table_view.doubleClicked.connect(self.on_doubled_clicked)
+        self.table_view.clicked.connect(self.on_clicked)
+        self.table_view.setSelectionBehavior(QTableView.SelectRows)
+        self.table_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table_view.customContextMenuRequested.connect(self.context_menu)
+        self.table_view.setItemDelegate(FileItemDelegate(self.table_view))
+        self.table_view.setStyleSheet('font-size: 16px;')
+        # self.table_view.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        # self.table_view.resizeColumnsToContents()
 
-        self.deleteKey = QShortcut(QtCore.Qt.Key_Delete, self.tableView)
-        self.deleteKey.activated.connect(self.onDeleteKey)
+        self.delete_key = QShortcut(QtCore.Qt.Key_Delete, self.table_view)
+        self.delete_key.activated.connect(self.on_delete_key)
 
-        self.tableView.installEventFilter(self)
+        self.table_view.installEventFilter(self)
 
-        self.navigationDict = dict()
+        self.navigation_dict = dict()
 
         # Customize tableview header
-        self.tableHeader = self.tableView.horizontalHeader()
-        self.tableHeader.setStyleSheet("QHeaderView { font-size: 12pt; }")
-        self.tableHeader.setDefaultAlignment(Qt.AlignCenter|Qt.Alignment(Qt.TextWordWrap))
-        sizePol = QSizePolicy()
-        sizePol.setVerticalPolicy(QSizePolicy.Maximum)
-        sizePol.setHorizontalPolicy(QSizePolicy.Maximum)
-        self.tableHeader.setSizePolicy(sizePol)
+        self.table_header = self.table_view.horizontalHeader()
+        self.table_header.setStyleSheet("QHeaderView { font-weight: bold; font-size: 12pt; }")
+        self.table_header.setDefaultAlignment(Qt.AlignCenter | Qt.Alignment(Qt.TextWordWrap))
+
+        size_policy = QSizePolicy()
+        size_policy.setVerticalPolicy(QSizePolicy.Maximum)
+        size_policy.setHorizontalPolicy(QSizePolicy.Maximum)
+        self.table_header.setSizePolicy(size_policy)
 
         # Set column sizes
-        self.tableHeader.setSectionResizeMode(0, QHeaderView.Stretch)
-        self.tableHeader.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.tableHeader.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.tableHeader.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        # self.tableView.horizontalHeader().setStretchLastSection(True)
+        self.table_header.setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.table_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.table_header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.table_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
 
-        self.tableView.resizeColumnsToContents()
-        self.layout().addWidget(self.tableView)
+        if Settings.get_value(SettingsOptions.HEADER_PERMISSION) is False:
+            self.table_view.setColumnHidden(1, True)
 
+        if Settings.get_value(SettingsOptions.HEADER_SIZE) is False:
+            self.table_view.setColumnHidden(2, True)
+
+        if Settings.get_value(SettingsOptions.HEADER_DATE) is False:
+            self.table_view.setColumnHidden(3, True)
+
+        if Settings.get_value(SettingsOptions.HEADER_MIME_TYPE) is False:
+            self.table_view.setColumnHidden(4, True)
+
+        # self.table_view.horizontalHeader().setStretchLastSection(True)
+
+        self.table_view.resizeColumnsToContents()
+        self.layout().addWidget(self.table_view)
 
         self.loading = QLabel(self)
         self.loading.setAlignment(Qt.AlignCenter)
@@ -351,31 +353,24 @@ class FileExplorerWidget(QWidget):
         Global().communicate.files_refresh.connect(self.update)
         Global().communicate.app_close.connect(self.app_close)
 
-        # Emit device lable for status bar
+        # Emit device label for status bar
         device_name = Adb.manager().get_device().name
         Global().communicate.status_bar_device_label.emit(device_name)
 
         # Emit Android version for status bar
-        data, _ = FileRepository.AndroidVersion()
+        lines = ['']
+        data, _ = FileRepository.android_version()
         if data:
             lines = data.splitlines()
         Global().communicate.status_bar_android_version.emit(lines[0])
 
         # Emit Android root/unroot status for status bar
-        data, _ = FileRepository.IsAndroidRoot()
+        data, _ = FileRepository.is_android_root()
         Global().communicate.status_bar_is_root.emit(data)
 
         # Setup thread to monitor device
         self.device_status_thread = DeviceStatusThread(Settings.get_value(SettingsOptions.STATUSBAR_UPDATE_TIME))
         self.device_status_thread.start()
-
-    def onClicked(self):
-        print(f"onClicked: list (Focus={self.list.hasFocus()})")
-
-    def onDeleteKey(self):
-        print(f"onDeleteKey: list (Focus={self.list.hasFocus()})")
-        if self.list.hasFocus():
-            self.delete()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -390,44 +385,41 @@ class FileExplorerWidget(QWidget):
                 self.uploader.setup([obj])
                 self.uploader.upload()
             else:
-                print(f"Drag object is not file or folder")
+                print("Drag object is not file or folder")
 
-    def _changeSearchText(self, val):
+    def _change_search_text(self, val):
         print(f"SearchBar: SearchText -> {val}")
-        if (len(val) > 0):
+        if len(val) > 0:
             # Show filtered data
-            self.tableSortedModel.setFilterRegExp(val)
+            self.table_sorting_model.setFilterRegExp(val)
         else:
             # Bring back the unfilter data
-            self.tableSortedModel.setFilterRegExp(".*")
+            self.table_sorting_model.setFilterRegExp(".*")
 
-    def _changeSearchCaseSensitivity(self, val):
+    def _change_search_case_sensitivity(self, val):
         print(f"SearchBar: CaseSensitive -> {val}")
-        if val == True:
-            self.tableSortedModel.setFilterCaseSensitivity(Qt.CaseSensitive)
+        if val is True:
+            self.table_sorting_model.setFilterCaseSensitivity(Qt.CaseSensitive)
         else:
-            self.tableSortedModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+            self.table_sorting_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
-    def _getSelectedItems(self):
-        rowCount = self.tableSortedModel.rowCount()
-        currIdx = self.tableView.currentIndex()
-        origIdx = self.tableSortedModel.mapToSource(currIdx)
-        fileObject = self.tableModel.items[origIdx.row()]
-        return (fileObject, origIdx)
+    def _get_selected_items(self):
+        curr_idx = self.table_view.currentIndex()
+        orig_idx = self.table_sorting_model.mapToSource(curr_idx)
+        file_object = self.table_model.items[orig_idx.row()]
+        return (file_object, orig_idx)
 
     @property
     def file(self):
-        if self.tableView and self.tableView.currentIndex():
-            return self.tableModel.items[self.tableView.currentIndex().row()]
+        if self.table_view and self.table_view.currentIndex():
+            return self.table_model.items[self.table_view.currentIndex().row()]
+        return None
 
     @property
     def files(self):
-        # indexes = self.tableView.selectionModel().selectedRows()
-        # for index in sorted(indexes):
-        #     print('Row %d is selected' % index.row())
-
-        if self.tableView and len(self.tableView.selectionModel().selectedRows()) > 0:
-            return map(lambda index: self.tableModel.items[index.row()], self.tableView.selectionModel().selectedRows())
+        if self.table_view and len(self.table_view.selectionModel().selectedRows()) > 0:
+            return map(lambda index: self.table_model.items[index.row()], self.table_view.selectionModel().selectedRows())
+        return None
 
     def update(self):
         super(FileExplorerWidget, self).update()
@@ -440,8 +432,8 @@ class FileExplorerWidget(QWidget):
         )
         if Adb.worker().work(worker):
             # First Setup loading view
-            self.tableModel.clear()
-            self.tableView.setHidden(True)
+            self.table_model.clear()
+            self.table_view.setHidden(True)
             self.loading.setHidden(False)
             self.empty_label.setHidden(True)
             self.loading_movie.start()
@@ -464,69 +456,66 @@ class FileExplorerWidget(QWidget):
 
         if error:
             print(error, file=sys.stderr)
+            device_lost_err = f"error: device '{Adb.manager().get_device().id}' not found\n"
+            if error == device_lost_err:
+                Global().communicate.device_disconnect.emit()
+
             if not files:
                 Global().communicate.notification.emit(
                     MessageData(
                         title='Files',
                         timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
-                        body="<span style='color: red; font-weight: 600'> %s </span>" % error
+                        body=f"<span style='color: red; font-weight: 600'> {error} </span>"
                     )
                 )
         if not files:
+            self.table_view.setHidden(True)
             self.empty_label.setHidden(False)
         else:
             print(f"FileExplorerWidget: Refreshed (Path: {Adb.manager().get_current_path()})")
-            self.tableView.setHidden(False)
-            self.tableModel.populate(files)
-            self.tableView.setFocus()
+            Global().communicate.device_connect.emit()
+            self.table_view.setHidden(False)
+            self.table_model.populate(files)
+            self.table_view.setFocus()
 
-            currPath = Adb.manager().get_current_path()
-            currRowIdx = self.navigationDict.get(currPath, None)
-            if currRowIdx is not None:
-                print(f"FileExplorerWidget: Refreshed -- restore selection")
-                self.tableView.setCurrentIndex(currRowIdx)
-                self.tableView.selectRow(currRowIdx.row())
-                self.navigationDict.pop(currPath)
+            curr_path = Adb.manager().get_current_path()
+            cur_row = self.navigation_dict.get(curr_path, None)
+            if cur_row is not None:
+                print("FileExplorerWidget: Refreshed -- restore selection")
+                self.table_view.setCurrentIndex(cur_row)
+                self.table_view.selectRow(cur_row.row())
+                self.navigation_dict.pop(curr_path)
 
     def eventFilter(self, obj: 'QObject', event: 'QEvent') -> bool:
-        print(f"FileExplorerWidget: eventFilter (event: {QtEventsLookUp[event.type()]})")
-        # print(f"FileExplorerWidget: eventFilter {str(event)}")
-        # if obj == self.tableView and \
-        #         event.type() == QEvent.KeyPress and \
-        #         event.matches(QKeySequence.InsertParagraphSeparator) and \
-        #         not self.tableView.isPersistentEditorOpen(self.list.currentIndex()):
-        #     self.open(self.tableView.currentIndex())
+        # print(f"FileExplorerWidget: eventFilter (event: {QtEventsLookUp[event.type()]})")
 
-        if obj is self.tableView and event.type() == QtCore.QEvent.KeyPress:
+        if obj is self.table_view and event.type() == QtCore.QEvent.KeyPress:
             if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
-                self.onEnterKey()
-            else:
-                print(f"FileExplorerWidget: KeyPress -> Misc")
-        elif obj == self.tableView and event.type() == QEvent.Hide:
+                self.on_enter_key()
+        elif obj == self.table_view and event.type() == QEvent.Hide:
             self.device_status_thread.stop()
-
         return super(FileExplorerWidget, self).eventFilter(obj, event)
 
-    def onDoubleClicked(self, mi):
+    def on_doubled_clicked(self, _mi):
         self.open_file()
 
-    def onClicked(self, mi):
-        fileObject, _ = self._getSelectedItems()
-        print(f"onClicked (focus: {self.tableView.hasFocus()}){fileObject}")
+    def on_clicked(self, _mi):
+        file_object, _ = self._get_selected_items()
+        print(f"on_clicked (focus: {self.table_view.hasFocus()}){file_object}")
 
-    def onDeleteKey(self):
-        print('onDeleteKey: tableView: ' + str(self.tableView.hasFocus()))
-        if self.tableView.hasFocus():
+    def on_delete_key(self):
+        print('on_delete_key: table_view: ' + str(self.table_view.hasFocus()))
+        if self.table_view.hasFocus():
             self.delete()
 
-    def onEnterKey(self):
-        if self.tableView.hasFocus():
-            selectedCount = len([f for f in self.files])
-            print(f"onEnterKey: Count={selectedCount}")
-            if selectedCount == 1:
+    def on_enter_key(self):
+        if self.table_view.hasFocus():
+            selected_count = len([f for f in self.files])
+            print(f"on_enter_key: Count={selected_count}")
+            if selected_count == 1:
                 self.open_file()
             else:
-                msg += str(selectedCount) + " files are selected \n"
+                msg = str(selected_count) + " files are selected \n"
                 QMessageBox.information(
                     self,
                     'Info',
@@ -609,7 +598,7 @@ class FileExplorerWidget(QWidget):
                 MessageData(
                     title=title_error,
                     timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
-                    body="<span style='color: red; font-weight: 600'> %s </span>" % error
+                    body=f"<span style='color: red; font-weight: 600'> {error} </span>"
                 )
             )
         if data:
@@ -631,29 +620,29 @@ class FileExplorerWidget(QWidget):
         Global.communicate.files_refresh.emit()
 
     def rename(self):
-        self.tableView.edit(self.tableView.currentIndex())
+        self.table_view.edit(self.table_view.currentIndex())
 
     def open_file(self):
-        currPath = Adb.manager().get_current_path()
-        fileObject, selectedRowIdx = self._getSelectedItems()
-        print(f"open_file # {fileObject.path} (isDir:{fileObject.isdir})")
+        curr_path = Adb.manager().get_current_path()
+        file_object, selected_row = self._get_selected_items()
+        print(f"open_file # {file_object.path} (isDir:{file_object.isdir})")
 
-        if fileObject.isdir:
-            if Adb.manager().set_current_path(fileObject):
-                self.navigationDict[currPath] = selectedRowIdx
+        if file_object.isdir:
+            if Adb.manager().set_current_path(file_object):
+                self.navigation_dict[curr_path] = selected_row
                 Global().communicate.files_refresh.emit()
         else:
-            data, error = FileRepository.open_file(fileObject)
+            data, error = FileRepository.open_file(file_object)
             if error:
                 Global().communicate.notification.emit(
                     MessageData(
                         title='File',
                         timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
-                        body="<span style='color: red; font-weight: 600'> %s </span>" % error
+                        body=f"<span style='color: red; font-weight: 600'> {error} </span>"
                     )
                 )
             else:
-                self.text_view_window = TextView(fileObject.name, data)
+                self.text_view_window = TextView(file_object.name, data)
                 self.text_view_window.show()
 
     def delete(self):
@@ -691,7 +680,7 @@ class FileExplorerWidget(QWidget):
                         MessageData(
                             timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                             title="Delete",
-                            body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                            body=f"<span style='color: red; font-weight: 600'>{error}</span>",
                         )
                     )
             Global.communicate.files_refresh.emit()
@@ -712,7 +701,7 @@ class FileExplorerWidget(QWidget):
             if delete_too:
                 title += "& Delete "
             title += ": " + file.name
-            print(f"download_files: {title} ->  {destination}")
+            print(f"download_files: {title} -> {destination}")
 
             # Setup job
             helper = ProgressCallbackHelper()
@@ -736,7 +725,7 @@ class FileExplorerWidget(QWidget):
                 helper.setup(worker, worker.update_loading_widget)
                 worker.start()
 
-    def download_n_delete_files(self, destination: str = None):
+    def download_n_delete_files(self):
         self.download_files(delete_too=True)
 
     def download_to_n_delete(self):
@@ -746,21 +735,21 @@ class FileExplorerWidget(QWidget):
         file = self.file
 
         # Prepare info
-        info = "<br/><u><b>%s</b></u><br/>" % str(file)
-        info += "<pre>Name:        %s</pre>" % file.name or '-'
-        info += "<pre>Owner:       %s</pre>" % file.owner or '-'
-        info += "<pre>Group:       %s</pre>" % file.group or '-'
-        info += "<pre>Size:        %s</pre>" % file.raw_size or '-'
-        info += "<pre>Permissions: %s</pre>" % file.permissions or '-'
-        info += "<pre>Date:        %s</pre>" % file.raw_date or '-'
-        info += "<pre>Type:        %s</pre>" % file.type or '-'
+        info  = f"<br/><u><b>{str(file)}</b></u><br/>"
+        info += f"<pre>Name:        {file.name or '-'}</pre>"
+        info += f"<pre>Owner:       {file.owner or '-'}</pre>"
+        info += f"<pre>Group:       {file.group or '-'}</pre>"
+        info += f"<pre>Size:        {file.raw_size or '-'}</pre>"
+        info += f"<pre>Permissions: {file.permissions or '-'}</pre>"
+        info += f"<pre>Date:        {file.raw_date or '-'}</pre>"
+        info += f"<pre>Type:        {file.type or '-'}</pre>"
 
         if file.type == FileType.LINK:
-            info += "<pre>Links to:    %s</pre>" % file.link or '-'
+            info += f"<pre>Links to:    {file.link or '-'}</pre>"
 
         properties = QMessageBox(self)
         properties.setStyleSheet("background-color: #DDDDDD")
-        icon = QPixmap(self.tableModel.icon(self.file)).scaled(128, 128, Qt.KeepAspectRatio)
+        icon = QPixmap(self.table_model.icon(self.file)).scaled(128, 128, Qt.KeepAspectRatio)
         properties.setIconPixmap(icon)
         properties.setWindowTitle('Properties')
         properties.setInformativeText(info)
@@ -793,7 +782,7 @@ class FileExplorerWidget(QWidget):
                     MessageData(
                         timeout=Settings.get_value(SettingsOptions.NOTIFICATION_TIMEOUT),
                         title="Creating folder",
-                        body="<span style='color: red; font-weight: 600'> %s </span>" % error,
+                        body=f"<span style='color: red; font-weight: 600'> {error} </span>",
                     )
                 )
             if data:

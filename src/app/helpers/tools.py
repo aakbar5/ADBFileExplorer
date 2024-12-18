@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import json
 import logging
 import os
@@ -9,9 +10,10 @@ import subprocess
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QObject, QFile, QIODevice, QTextStream
 from PyQt5.QtWidgets import QWidget
+
 from adb_shell.auth.keygen import keygen
 from adb_shell.auth.sign_pythonrsa import PythonRSASigner
-
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import MessageData
 
 
@@ -27,9 +29,9 @@ class CommonProcess:
     """
 
     def __init__(self, arguments: list, stdout=subprocess.PIPE, stdout_callback: callable = None):
-        self.ErrorData = None
-        self.OutputData = None
-        self.IsSuccessful = False
+        self.error_data = None
+        self.output_data = None
+        self.is_okay = False
         if arguments:
             try:
                 process = subprocess.Popen(arguments, stdout=stdout, stderr=subprocess.PIPE)
@@ -37,18 +39,17 @@ class CommonProcess:
                     for line in iter(process.stdout.readline, b''):
                         stdout_callback(line.decode(encoding='utf-8'))
                 data, error = process.communicate()
-                self.ExitCode = process.poll()
-                self.IsSuccessful = self.ExitCode == 0
-                self.ErrorData = error.decode(encoding='utf-8') if error else None
-                self.OutputData = data.decode(encoding='utf-8') if data else None
+                self.exit_code = process.poll()
+                self.is_okay = self.exit_code == 0
+                self.error_data = error.decode(encoding='utf-8') if error else None
+                self.output_data = data.decode(encoding='utf-8') if data else None
             except UnicodeDecodeError:
-                self.ErrorData = "Can't open it, file format is uknown"
+                self.error_data = "Can't open it, file format is uknown"
             except FileNotFoundError:
-                self.ErrorData = "Command '%s' failed! File (command) '%s' not found!" % \
-                                 (' '.join(arguments), arguments[0])
+                self.error_data = f"Command {' '.join(arguments)} failed! File (command) '{arguments[0]}' not found!"
             except BaseException as error:
-                logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
-                self.ErrorData = str(error)
+                logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
+                self.error_data = str(error)
 
 
 class AsyncRepositoryWorker(QThread):
@@ -89,7 +90,7 @@ class AsyncRepositoryWorker(QThread):
 
     def update_loading_widget(self, path, progress):
         if self.loading_widget and not self.closed:
-            self.loading_widget.update_progress('SOURCE: %s' % path, progress)
+            self.loading_widget.update_progress(f"SOURCE: {path}", progress)
 
 
 class ProgressCallbackHelper(QObject):
@@ -105,43 +106,43 @@ class Communicate(QObject):
 
     files = QtCore.pyqtSignal()
     devices = QtCore.pyqtSignal()
+    device_disconnect = QtCore.pyqtSignal()
+    device_connect = QtCore.pyqtSignal()
 
     up = QtCore.pyqtSignal()
     files_refresh = QtCore.pyqtSignal()
     path_toolbar_refresh = QtCore.pyqtSignal()
 
     notification = QtCore.pyqtSignal(MessageData)
+
     status_bar_general = QtCore.pyqtSignal(str, int)  # Message, Duration
     status_bar_device_label = QtCore.pyqtSignal(str)  # Message
     status_bar_android_version = QtCore.pyqtSignal(str)  # Message
     status_bar_is_root = QtCore.pyqtSignal(int)  # int
     status_bar_battery_level = QtCore.pyqtSignal(str, str)  # Message
 
-    searchTextUpdate = QtCore.pyqtSignal(str)
-    searchCaseUpdate = QtCore.pyqtSignal(bool)
+    search_text_update = QtCore.pyqtSignal(str)
+    search_case_update = QtCore.pyqtSignal(bool)
 
 def get_python_rsa_keys_signer(rerun=True) -> PythonRSASigner:
-    privkey = os.path.expanduser('~/.android/adbkey.file')
-    if os.path.isfile(privkey):
-        with open(privkey) as f:
+    priv_key = Settings.get_value(SettingsOptions.ADB_KEY_FILE_PATH)
+    if os.path.isfile(priv_key):
+        with open(priv_key, encoding="utf-8") as f:
             private = f.read()
-        pubkey = privkey + '.pub'
+        pubkey = priv_key + '.pub'
         if not os.path.isfile(pubkey):
             if shutil.which('ssh-keygen'):
-                os.system(f'ssh-keygen -y -f {privkey} > {pubkey}')
+                os.system(f'ssh-keygen -y -f {priv_key} > {pubkey}')
             else:
                 raise OSError('Could not call ssh-keygen!')
-        with open(pubkey) as f:
+        with open(pubkey, encoding="utf-8") as f:
             public = f.read()
         return PythonRSASigner(public, private)
-    elif rerun:
-        path = os.path.expanduser('~/.android')
-        if not os.path.isfile(path):
-            if not os.path.isdir(path):
-                os.mkdir(path)
-            keygen(key)
-            return get_python_rsa_keys_signer(False)
-
+    if rerun:
+        # TODO: Testing this use-case
+        keygen(priv_key)
+        return get_python_rsa_keys_signer(False)
+    return None
 
 def read_string_from_file(path: str):
     file = QFile(path)
@@ -160,5 +161,5 @@ def json_to_dict(path: str):
     try:
         return dict(json.loads(read_string_from_file(path)))
     except BaseException as exception:
-        logging.error('File %s. %s' % (path, exception))
-        return dict()
+        logging.error("File %s. %s", path, exception)
+        return {}

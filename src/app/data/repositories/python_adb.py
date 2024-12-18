@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import datetime
 import logging
 import os
@@ -8,8 +9,8 @@ from typing import List, Tuple
 
 from usb1 import USBContext
 
-from app.core.settings import Settings
 from app.core.managers import PythonADBManager
+from app.core.settings import Settings
 from app.data.models import Device, File, FileType
 from app.helpers.converters import __converter_to_permissions_default__
 from app.services.adb_helper import ShellCommand
@@ -17,7 +18,7 @@ from app.services.adb_helper import ShellCommand
 
 class FileRepository:
     @classmethod
-    def DeviceBatteryLevel(cls) -> Tuple[str, str]:
+    def battery_level(cls) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -25,7 +26,7 @@ class FileRepository:
         return "TODO", "None"
 
     @classmethod
-    def IsAndroidRoot(cls) -> Tuple[str, str]:
+    def is_android_root(cls) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -33,7 +34,7 @@ class FileRepository:
         return "TODO", "None"
 
     @classmethod
-    def AndroidVersion(cls) -> Tuple[str, str]:
+    def android_version(cls) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
@@ -47,7 +48,7 @@ class FileRepository:
         if not PythonADBManager.device.available:
             return None, "Device not available!"
         try:
-            path = PythonADBManager.set_path(path)
+            path = PythonADBManager.set_current_path(path)
             mode, size, mtime = PythonADBManager.device.stat(path)
             file = File(
                 name=os.path.basename(os.path.normpath(path)),
@@ -62,13 +63,13 @@ class FileRepository:
                 file.link_type = FileType.UNKNOWN
                 if response and response.startswith('d'):
                     file.link_type = FileType.DIRECTORY
-                elif response and response.__contains__('Not a'):
+                elif response and 'Not a' in response:
                     file.link_type = FileType.FILE
             file.path = path
             return file, None
 
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     @classmethod
@@ -94,7 +95,7 @@ class FileRepository:
                 link_type = None
                 if permissions[0] == 'l':
                     link_type = FileType.FILE
-                    if dirs.__contains__(path + file.filename.decode() + "/"):
+                    if str(path + file.filename.decode() + "/") in dirs:
                         link_type = FileType.DIRECTORY
 
                 files.append(
@@ -111,7 +112,7 @@ class FileRepository:
             return files, None
 
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return files, error
 
     @classmethod
@@ -120,7 +121,7 @@ class FileRepository:
             return None, "No device selected!"
         if not PythonADBManager.device.available:
             return None, "Device not available!"
-        if name.__contains__('/') or name.__contains__('\\'):
+        if '/' in name or '\\' in name:
             return None, "Invalid name"
 
         try:
@@ -130,7 +131,7 @@ class FileRepository:
                 return None, response
             return None, None
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     @classmethod
@@ -142,11 +143,11 @@ class FileRepository:
         try:
             args = [ShellCommand.CAT, shlex.quote(file.path)]
             if file.isdir:
-                return None, "Can't open. %s is a directory" % file.path
+                return None, f"Can't open. {file.path} is a directory"
             response = PythonADBManager.device.shell(shlex.join(args))
             return response, None
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     @classmethod
@@ -162,9 +163,9 @@ class FileRepository:
             response = PythonADBManager.device.shell(shlex.join(args))
             if response:
                 return None, response
-            return "%s '%s' has been deleted" % ('Folder' if file.isdir else 'File', file.path), None
+            return f"{'Folder' if file.isdir else 'File'} '{file.path}' has been deleted", None
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     class UpDownHelper:
@@ -195,9 +196,9 @@ class FileRepository:
                     local_path=destination,
                     progress_callback=helper.call
                 )
-                return "Download successful!\nDest: %s" % destination, None
+                return f"Download successful!\nDest: {destination}", None
             except BaseException as error:
-                logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+                logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
                 return None, error
         return None, None
 
@@ -214,7 +215,7 @@ class FileRepository:
             return None, response
 
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     @classmethod
@@ -228,9 +229,9 @@ class FileRepository:
                     device_path=destination,
                     progress_callback=helper.call
                 )
-                return "Upload successful!\nDest: %s" % destination, None
+                return f"Upload successful!\nDest: {destination}", None
             except BaseException as error:
-                logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+                logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
                 return None, error
         return None, None
 
@@ -256,7 +257,7 @@ class DeviceRepository:
                         devices.append(Device(id=device_id, name=device_name, type=device_type))
                         PythonADBManager.device.close()
                     except BaseException as error:
-                        logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+                        logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
                         errors.append(str(error))
 
         return devices, str("\n".join(errors))
@@ -276,7 +277,7 @@ class DeviceRepository:
             return None, "Device not available"
 
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error
 
     @classmethod
@@ -287,5 +288,5 @@ class DeviceRepository:
                 return "Disconnected", None
             return None, None
         except BaseException as error:
-            logging.exception("Unexpected error=%s, type(error)=%s" % (error, type(error)))
+            logging.exception("Unexpected error=%s, type(error)=%s", error, type(error))
             return None, error

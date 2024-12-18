@@ -1,11 +1,11 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import datetime
 import re
 from typing import List
 
 from app.data.models import Device, File, FileType
-
 
 # Converter to Device list
 # command: adb devices -l
@@ -53,17 +53,17 @@ def convert_to_file(data: str) -> File:
         file_type = int(fields[1])
 
         code = permission[0]
-        if ['s', 'd', '-', 'l'].__contains__(code):
+        if code in ['s', 'd', '-', 'l']:
             size = int(fields[4])
-            date = datetime.datetime.strptime("%s %s" % (fields[5], fields[6]), date_pattern)
+            date = datetime.datetime.strptime(f"{fields[5]} {fields[6]}", date_pattern)
             name = " ".join(fields[7:])
             if code == 'l':
                 name = " ".join(fields[7:fields.index('->')])
                 link = " ".join(fields[fields.index('->') + 1:])
-        elif ['c', 'b'].__contains__(code):
+        elif code in ['c', 'b']:
             other = fields[4]
             size = int(fields[5])
-            date = datetime.datetime.strptime("%s %s" % (fields[6], fields[7]), date_pattern)
+            date = datetime.datetime.strptime(f"{fields[6]} {fields[7]}", date_pattern)
             name = fields[8]
 
         if name.startswith('/'):
@@ -80,7 +80,7 @@ def convert_to_file(data: str) -> File:
             file_type=file_type,
             permissions=permission,
         )
-    elif re.fullmatch(r'[-dlcbsp][-rwxst]{9}\s+\S+\s+\S+\s*\d*,?\s*\d*\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2} .*', data):
+    if re.fullmatch(r'[-dlcbsp][-rwxst]{9}\s+\S+\s+\S+\s*\d*,?\s*\d*\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2} .*', data):
         fields = data.split()
 
         size = 0
@@ -94,22 +94,22 @@ def convert_to_file(data: str) -> File:
         group = fields[2]
 
         code = permission[0]
-        if code == 'd' or code == 's':
+        if code in ['d', 's']:
             name = " ".join(fields[5:])
-            date = datetime.datetime.strptime("%s %s" % (fields[3], fields[4]), date_pattern)
+            date = datetime.datetime.strptime(f"{fields[3]} {fields[4]}", date_pattern)
         elif code == '-':
             size = int(fields[3])
             name = " ".join(fields[6:])
-            date = datetime.datetime.strptime("%s %s" % (fields[4], fields[5]), date_pattern)
+            date = datetime.datetime.strptime(f"{fields[4]} {fields[5]}", date_pattern)
         elif code == 'l':
             name = " ".join(fields[5:fields.index('->')])
             link = " ".join(fields[fields.index('->') + 1:])
-            date = datetime.datetime.strptime("%s %s" % (fields[3], fields[4]), date_pattern)
-        elif code == 'c' or code == 'b':
+            date = datetime.datetime.strptime(f"{fields[3]} {fields[4]}", date_pattern)
+        elif code in ['c', 'b']:
             size = int(fields[4])
             other = fields[3]
             name = " ".join(fields[7:])
-            date = datetime.datetime.strptime("%s %s" % (fields[5], fields[6]), date_pattern)
+            date = datetime.datetime.strptime(f"{fields[5]} {fields[6]}", date_pattern)
 
         if name.startswith('/'):
             name = name[name.rindex('/') + 1:]
@@ -124,6 +124,7 @@ def convert_to_file(data: str) -> File:
             date_time=date,
             permissions=permission,
         )
+    return None
 
 
 # Converter to File list (a)
@@ -139,19 +140,20 @@ def convert_to_file_list_a(data: str, **kwargs) -> List[File]:
 
     files = []
     for line in lines:
-        re__permission = re.search(r'[-dlcbsp][-rwxst]{9}', line)
-        re__size_datetime_name = re.search(r'\d* \d{4}-\d{2}-\d{2} \d{2}:\d{2} .+', line)
-        if re__permission and re__size_datetime_name:
-            size_date_name = re__size_datetime_name[0].split(' ')
+        re_permission = re.search(r'[-dlcbsp][-rwxst]{9}', line)
+        re_size_datetime_name = re.search(r'\d* \d{4}-\d{2}-\d{2} \d{2}:\d{2} .+', line)
+        if re_permission and re_size_datetime_name:
+            size_date_name = re_size_datetime_name[0].split(' ')
             if len(size_date_name) == 4 and size_date_name[3] == '.':
                 continue
-            elif len(size_date_name) == 4 and size_date_name[3] == '..':
+            if len(size_date_name) == 4 and size_date_name[3] == '..':
                 continue
 
-            permission = re__permission[0]
+            permission = re_permission[0]
             size = int(size_date_name[0] or 0)
             date_time = datetime.datetime.strptime(
-                "%s %s" % (size_date_name[1], size_date_name[2]), '%Y-%m-%d %H:%M'
+                f"{size_date_name[1]} {size_date_name[2]}",
+                '%Y-%m-%d %H:%M'
             )
             names = size_date_name[3:]
 
@@ -162,7 +164,8 @@ def convert_to_file_list_a(data: str, **kwargs) -> List[File]:
                 name = " ".join(names[:names.index('->')])
                 link = " ".join(names[names.index('->') + 1:])
                 link_type = FileType.FILE
-                if dirs.__contains__(path + name + '/'):
+                full_path = path + name + '/'
+                if full_path in dirs:
                     link_type = FileType.DIRECTORY
             files.append(
                 File(
@@ -208,12 +211,12 @@ def convert_to_file_list_b(data: str) -> List[File]:
 # Get lines from raw data
 def convert_to_lines(data: str) -> List[str]:
     if not data:
-        return list()
+        return []
 
     lines = re.split(r'\n', data)
     for index, line in enumerate(lines):
         regex = re.compile(r'[\r\t]')
-        lines[index] = regex.sub('', lines[index])
+        lines[index] = regex.sub('', line)
     filtered = filter(bool, lines)
     return list(filtered)
 
@@ -248,8 +251,9 @@ def __converter_to_permissions_default__(octal_data: list) -> str:
     }
 
     octal_data.reverse()
-    for i in range(0, len(octal_data)):
-        octal_data[i] = int(octal_data[i])
+
+    for i, odata, in enumerate(octal_data):
+        octal_data[i] = int(odata)
     octal_data.extend([0] * (8 - len(octal_data)))
 
     others = permission[octal_data[0]]

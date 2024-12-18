@@ -13,23 +13,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from app.core.resources import Resources
-from app.core.application import Application
 from app.core.adb import Adb
+from app.core.application import Application
+from app.core.resources import Resources
 from app.gui.window import MainWindow
 from app.helpers.tools import read_string_from_file
 
 if __name__ == '__main__':
     Application()
     Adb.start()
-    app = QApplication(sys.argv)
 
-    app.setApplicationName("ADB File Explorer")
-    
+    app = QApplication(sys.argv)
+    app.setOrganizationName("ADBFileExplorer")
+    app.setApplicationName("ADBFileExplorer")
+
     window = MainWindow()
     window.setStyleSheet(read_string_from_file(Resources.style_window))
     window.show()

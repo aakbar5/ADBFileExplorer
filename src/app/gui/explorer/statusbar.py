@@ -3,13 +3,14 @@
 
 import threading
 
+from PyQt5.QtCore import (pyqtSignal, QObject, QSize)
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QObject, QSize, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QWidget)
 
-from app.data.repositories import FileRepository
-from app.core.resources import Resources
 from app.core.managers import Global
+from app.core.resources import Resources
+from app.data.repositories import FileRepository
+
 
 class AndroidBatteryWidget(QWidget):
     HorizontalSpacing = 2
@@ -43,66 +44,71 @@ class AndroidBatteryWidget(QWidget):
             self.icon.setVisible(False)
         else:
             # Ref: https://developer.android.com/reference/android/hardware/BatteryState
-            BATTERY_STATUS_FULL         = 5
-            BATTERY_STATUS_NOT_CHARGING = 4
-            BATTERY_STATUS_DISCHARGING  = 3
-            BATTERY_STATUS_CHARGING     = 2
-            BATTERY_STATUS_UNKNOWN      = 1
+            battery_status_full         = 5
+            battery_status_not_charging = 4
+            battery_status_discharging  = 3
+            battery_status_charging     = 2
+            battery_status_unknown      = 1
 
             int_level = int(text_level)
             int_status = int(text_status)
 
             battery_sts = "??"
-            if int_status == BATTERY_STATUS_UNKNOWN:
-                battery_sts = "??"
-                battery_icon = QIcon(Resources.icon_battery_xx).pixmap(self.IconSize)
-            elif int_status == BATTERY_STATUS_FULL:
+            battery_icon = QIcon(Resources.icon_battery_xx).pixmap(self.IconSize)
+
+            if int_status == battery_status_full:
                 battery_sts = "100%"
                 battery_icon = QIcon(Resources.icon_battery_100).pixmap(self.IconSize)
-            elif int_status == BATTERY_STATUS_CHARGING:
-                if int_level >= 1 and int_level <= 10:
+            elif int_status == battery_status_charging:
+                if 1 <= int_level <= 10:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_10).pixmap(self.IconSize)
-                elif int_level >= 11 and int_level <= 20:
+                elif 11 <= int_level <= 20:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_20).pixmap(self.IconSize)
-                elif int_level >= 21 and int_level <= 40:
+                elif 21 <= int_level <= 40:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_40).pixmap(self.IconSize)
-                elif int_level >= 41 and int_level <= 60:
+                elif 41 <= int_level <= 60:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_60).pixmap(self.IconSize)
-                elif int_level >= 61 and int_level <= 80:
+                elif 61 <= int_level <= 80:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_80).pixmap(self.IconSize)
-                elif int_level >= 81 and int_level <= 99:
+                elif 81 <= int_level <= 99:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_charging_90).pixmap(self.IconSize)
-            elif int_status == BATTERY_STATUS_NOT_CHARGING:
-                if int_level >= 1 and int_level <= 10:
+            elif int_status == battery_status_not_charging:
+                if 1 <= int_level <= 10:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_10).pixmap(self.IconSize)
-                elif int_level >= 11 and int_level <= 20:
+                elif 11 <= int_level <= 20:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_20).pixmap(self.IconSize)
-                elif int_level >= 21 and int_level <= 40:
+                elif 21 <= int_level <= 40:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_40).pixmap(self.IconSize)
-                elif int_level >= 41 and int_level <= 60:
+                elif 41 <= int_level <= 60:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_60).pixmap(self.IconSize)
-                elif int_level >= 61 and int_level <= 80:
+                elif 61 <= int_level <= 80:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_80).pixmap(self.IconSize)
-                elif int_level >= 81 and int_level <= 99:
+                elif 81 <= int_level <= 99:
                     battery_sts = f"{int_level}%".ljust(5)
                     battery_icon = QIcon(Resources.icon_battery_normal_90).pixmap(self.IconSize)
+            elif int_status == battery_status_discharging:
+                battery_sts = f"{int_level}%".ljust(5)
+                battery_icon = QIcon(Resources.icon_battery_xx).pixmap(self.IconSize)
+            elif int_status == battery_status_unknown:
+                battery_sts = f"{int_level}%".ljust(5)
+                battery_icon = QIcon(Resources.icon_battery_xx).pixmap(self.IconSize)
 
             self.icon.setPixmap(battery_icon)
             self.icon.setVisible(True)
             self.text_widget.setText(battery_sts)
 
-class IsAndroidRootWidget(QWidget):
+class AndroidRootWidget(QWidget):
     IconSize = QSize(16, 16)
     HorizontalSpacing = 2
 
@@ -113,8 +119,8 @@ class IsAndroidRootWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self.IconLock = QIcon(Resources.icon_lock).pixmap(self.IconSize)
-        self.IconUnlock = QIcon(Resources.icon_unlock).pixmap(self.IconSize)
+        self.lock_icon = QIcon(Resources.icon_lock).pixmap(self.IconSize)
+        self.unlock_icon = QIcon(Resources.icon_unlock).pixmap(self.IconSize)
 
         self.icon = QLabel()
         self.icon.setVisible(False)
@@ -131,11 +137,11 @@ class IsAndroidRootWidget(QWidget):
 
     def update_text(self, integer):
         text = "User"
-        icon = self.IconLock
+        icon = self.lock_icon
 
         if integer == 0:
             text = "Root"
-            icon = self.IconUnlock
+            icon = self.unlock_icon
 
         self.icon.setPixmap(icon)
         self.icon.setVisible(True)
@@ -223,10 +229,12 @@ class DeviceStatusThread(threading.Thread, QObject):
         threading.Thread.__init__(self)
 
     def run(self):
-        while not self._stop_event.isSet():
+        while not self._stop_event.is_set():
 
             # Update battery status
-            data_level, data_sts = FileRepository.DeviceBatteryLevel()
+            lines_level = ['']
+            lines_sts = ['']
+            data_level, data_sts = FileRepository.battery_level()
             if data_level:
                 lines_level = data_level.splitlines()
             if data_sts:
@@ -234,7 +242,7 @@ class DeviceStatusThread(threading.Thread, QObject):
             Global().communicate.status_bar_battery_level.emit(lines_level[0], lines_sts[0])
 
             # Update root/unroot status
-            data, _ = FileRepository.IsAndroidRoot()
+            data, _ = FileRepository.is_android_root()
             Global().communicate.status_bar_is_root.emit(data)
 
             self._stop_event.wait(self._delay_sec)

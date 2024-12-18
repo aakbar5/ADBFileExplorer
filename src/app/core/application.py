@@ -1,5 +1,6 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
+
 import platform
 
 from app.helpers.singleton import Singleton
@@ -10,8 +11,6 @@ class Application(metaclass=Singleton):
 
     def __init__(self):
         print('─────────────────────────────────')
-        print('ADB File Explorer v%s' % self.__version__)
-        print('Copyright (C) 2022 %s' % self.__author__)
+        print(f'ADB File Explorer v{self.__version__}')
         print('─────────────────────────────────')
-        print('Platform %s' % platform.platform())
-
+        print(f'Platform {platform.platform()}')
