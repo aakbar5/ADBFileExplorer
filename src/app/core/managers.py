@@ -28,8 +28,11 @@ class ADBManager:
             return ADBManager.default_path
 
         path = os.path.normcase(path)
-        path = os.path.normpath(path)
         path = posixpath.normpath(path)
+
+        # On Windows normcase, can path to / to \ so
+        path = path.replace('\\','/')
+
         if not path.endswith("/"):
             path += "/"
         return path
