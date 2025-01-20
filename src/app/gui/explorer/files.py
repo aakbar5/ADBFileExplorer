@@ -404,22 +404,47 @@ class FileExplorerWidget(QWidget):
             self.table_sorting_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
     def _get_selected_items(self):
-        curr_idx = self.table_view.currentIndex()
-        orig_idx = self.table_sorting_model.mapToSource(curr_idx)
-        file_object = self.table_model.items[orig_idx.row()]
-        return (file_object, orig_idx)
+        """
+        Return selected items as list of tuples where each
+        tuple consists of file object and row index.
+        """
+
+        selection = []
+        indexes = self.table_view.selectionModel().selectedRows()
+        for index in sorted(indexes):
+            orig_idx = self.table_sorting_model.mapToSource(index)
+            file_object = self.table_model.items[orig_idx.row()]
+            selection.append((file_object, orig_idx))
+        return selection
 
     @property
     def file(self):
-        if self.table_view and self.table_view.currentIndex():
-            return self.table_model.items[self.table_view.currentIndex().row()]
-        return None
+        selected_rows = self._get_selected_items()
+        if (len(selected_rows)) == 0:
+            return None
+
+        if (len(selected_rows)) > 1:
+            print("Multiple items are selected, using only first one")
+
+        selected_item = self._get_selected_items()[0]
+        file_object, _ = selected_item
+        return file_object
 
     @property
     def files(self):
-        if self.table_view and len(self.table_view.selectionModel().selectedRows()) > 0:
-            return map(lambda index: self.table_model.items[index.row()], self.table_view.selectionModel().selectedRows())
-        return None
+        """
+        Return selected file objects as list of file paths.
+        """
+
+        selected_rows = self._get_selected_items()
+        if (len(selected_rows)) == 0:
+            return None
+
+        selected_files = []
+        for selected_item in selected_rows:
+            file_object, _ = selected_item
+            selected_files.append(file_object)
+        return selected_files
 
     def update(self):
         super(FileExplorerWidget, self).update()
@@ -500,8 +525,8 @@ class FileExplorerWidget(QWidget):
         self.open_file()
 
     def on_clicked(self, _mi):
-        file_object, _ = self._get_selected_items()
-        print(f"on_clicked (focus: {self.table_view.hasFocus()}){file_object}")
+        for f in self.files:
+            print(f"on_clicked (focus: {self.table_view.hasFocus()}) {f.name}")
 
     def on_delete_key(self):
         print('on_delete_key: table_view: ' + str(self.table_view.hasFocus()))
@@ -623,8 +648,19 @@ class FileExplorerWidget(QWidget):
         self.table_view.edit(self.table_view.currentIndex())
 
     def open_file(self):
+        selected_items = self._get_selected_items()
+        if (len(selected_items)) > 1:
+            msg = "Multiple items are selected, select only one to open"
+            QMessageBox.information(
+                self,
+                'Info',
+                msg,
+                QMessageBox.Ok, QMessageBox.Ok
+            )
+            return
+
         curr_path = Adb.manager().get_current_path()
-        file_object, selected_row = self._get_selected_items()
+        file_object, selected_row = selected_items[0]
         print(f"open_file # {file_object.path} (isDir:{file_object.isdir})")
 
         if file_object.isdir:
