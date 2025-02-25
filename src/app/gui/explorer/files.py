@@ -354,8 +354,11 @@ class FileExplorerWidget(QWidget):
         Global().communicate.app_close.connect(self.app_close)
 
         # Emit device label for status bar
-        device_name = Adb.manager().get_device().name
-        Global().communicate.status_bar_device_label.emit(device_name)
+        name  = Adb.manager().get_device().name
+        name += "["
+        name += Adb.manager().get_device().id
+        name += "] "
+        Global().communicate.status_bar_device_label.emit(name)
 
         # Emit Android version for status bar
         lines = ['']
