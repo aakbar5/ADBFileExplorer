@@ -2,13 +2,14 @@
 extension-pkg-whitelist=PyQt5
 ignore-paths=.venv/
 disable=
+    C0103, # snake_name
     C0114, # missing-module-docstring
     C0115, # missing-class-docstring
     C0116, # missing-function-docstring
     C0301, # line-too-long
-    W0718, # broad-exception-caught
     R0903, # too-few-public-methods
     R1725, # super-with-arguments
+    W0718, # broad-exception-caught
 
 [MESSAGES CONTROL]
 disable=C0114,C0115,C0116,C0301,W0718,R0903,R1725
