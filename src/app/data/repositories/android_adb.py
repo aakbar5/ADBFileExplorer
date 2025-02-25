@@ -154,6 +154,7 @@ class FileRepository:
     def download(cls, progress_callback: callable, source: File, destination: str, delete_too: bool = False) -> Tuple[str, str]:
         if not destination:
             destination = Settings.get_value(SettingsOptions.DOWNLOAD_PATH, ADBManager.get_device())
+            destination = destination.replace(" ", "_")
 
         if ADBManager.get_device() and source and destination:
             helper = cls.UpDownHelper(progress_callback)

@@ -10,7 +10,7 @@ from typing import List, Tuple
 from usb1 import USBContext
 
 from app.core.managers import PythonADBManager
-from app.core.settings import Settings
+from app.core.settings import SettingsOptions, Settings
 from app.data.models import Device, File, FileType
 from app.helpers.converters import __converter_to_permissions_default__
 from app.services.adb_helper import ShellCommand
@@ -185,7 +185,8 @@ class FileRepository:
     @classmethod
     def download(cls, progress_callback: callable, source: File, destination: str = None, delete_too: bool = False) -> Tuple[str, str]:
         if not destination:
-            destination = Settings.device_downloads_path(PythonADBManager.get_device())
+            destination = Settings.get_value(SettingsOptions.DOWNLOAD_PATH, PythonADBManager.get_device())
+            destination = destination.replace(" ", "_")
 
         helper = cls.UpDownHelper(progress_callback)
         destination = os.path.join(destination, os.path.basename(os.path.normpath(source)))

@@ -131,7 +131,8 @@ class Settings(metaclass=Singleton):
             if not os.path.isdir(raw_value):
                 os.mkdir(raw_value)
             if device:
-                downloads_path = os.path.join(raw_value, device.name)
+                device_name = device.name.replace(" ", "_")
+                downloads_path = os.path.join(raw_value, device_name)
                 if not os.path.isdir(downloads_path):
                     os.mkdir(downloads_path)
                 return downloads_path
