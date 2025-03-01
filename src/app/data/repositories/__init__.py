@@ -10,6 +10,14 @@ from app.data.repositories import android_adb, python_adb
 
 class FileRepository:
     @classmethod
+    def capture_screenshot(cls) -> Tuple[str, str]:
+        if Adb.core == Adb.PYTHON_ADB_SHELL:
+            return python_adb.FileRepository.capture_screenshot()
+        if Adb.core == Adb.EXTERNAL_TOOL_ADB:
+            return android_adb.FileRepository.capture_screenshot()
+        return None
+
+    @classmethod
     def battery_level(cls) -> Tuple[str, str]:
         if Adb.core == Adb.PYTHON_ADB_SHELL:
             return python_adb.FileRepository.battery_level()
