@@ -24,13 +24,25 @@ Device detect:
 
 <img src="assets/screenshots/device_detected_2.png" width="480" alt="device detect">
 
-Files
-
-<img src="assets/screenshots/device_file_list.png" width="480" alt="Files">
 
 Preferences
 
-<img src="assets/screenshots/perferences.png" width="430" alt="Files">
+<img src="assets/screenshots/perferences.png" width="430" alt="preferences">
+
+Contents listing
+
+- Standard
+<img src="assets/screenshots/device_content_listing_1.png" width="480" alt="Contents">
+
+- Hide Mime type column
+<img src="assets/screenshots/device_content_listing_2.png" width="480" alt="Contents">
+
+- Change date format (ISO)
+<img src="assets/screenshots/device_content_listing_3.png" width="480" alt="Contents">
+
+- Change date format (24 hours)
+<img src="assets/screenshots/device_content_listing_4.png" width="480" alt="Contents">
+
 
 ## Requirements
 
@@ -59,7 +71,7 @@ bash run.sh # To start application on Linux...
 
 ```text
 ADB File Explorer [python-app]
-Copyright (C) 2022  Azat Aldeshov
+Copyright (C) 2022 - 2025  Azat Aldeshov, Asad Akbar
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
