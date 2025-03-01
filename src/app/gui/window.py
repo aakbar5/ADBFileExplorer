@@ -12,7 +12,7 @@ from app.data.models import MessageData, MessageType
 from app.data.repositories import DeviceRepository
 from app.gui.explorer import MainExplorer
 from app.gui.explorer.preference import PerferenceDialog
-from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, AndroidRootWidget, AndroidBatteryWidget
+from app.gui.explorer.statusbar import DeviceLabelWidget, AndroidVersionWidget, AndroidRootWidget, AndroidBatteryWidget, DeviceCameraWidget
 from app.gui.help import About
 from app.gui.notification import NotificationCenter
 from app.helpers.tools import AsyncRepositoryWorker
@@ -185,6 +185,10 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(Resources.icon_logo))
 
         self.status_bar = self.statusBar()
+
+        self.status_bar_camera = DeviceCameraWidget()
+        self.status_bar.addPermanentWidget(self.status_bar_camera)
+
         self.status_bar_device_label = DeviceLabelWidget()
         self.status_bar.addPermanentWidget(self.status_bar_device_label)
 
@@ -224,12 +228,14 @@ class MainWindow(QMainWindow):
             Global().communicate.notification.emit(MessageData(title=welcome_title, body=welcome_body, timeout=30000))
 
     def device_connect(self):
+        self.status_bar_camera.setVisible(True)
         self.status_bar_device_label.setVisible(True)
         self.status_bar_android_version.setVisible(True)
         self.status_bar_battery.setVisible(True)
         self.status_bar_root.setVisible(True)
 
     def device_disconnect(self):
+        self.status_bar_camera.setVisible(False)
         self.status_bar_device_label.setVisible(False)
         self.status_bar_android_version.setVisible(False)
         self.status_bar_battery.setVisible(False)

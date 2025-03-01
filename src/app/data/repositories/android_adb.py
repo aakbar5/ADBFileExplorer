@@ -1,6 +1,7 @@
 # ADB File Explorer
 # Copyright (C) 2022  Azat Aldeshov
 
+from datetime import datetime
 from typing import List, Tuple
 import shlex
 
@@ -12,6 +13,23 @@ from app.services import adb_helper
 
 
 class FileRepository:
+    @classmethod
+    def capture_screenshot(cls) -> Tuple[str, str]:
+        # print(f"android_adb: capture_screenshot")
+
+        if not ADBManager.get_device():
+            return None, "No device selected!"
+
+        # current date and time
+        time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_name = "/sdcard/Download/screenshot_" + time_stamp + ".png"
+        args = ['screencap', '-p', file_name]
+        adb_reponse = adb_helper.shell(ADBManager.get_device().id, args)
+        if not adb_reponse.is_okay:
+            return None, adb_reponse.error_data or adb_reponse.output_data
+
+        return adb_reponse.output_data, file_name
+
     @classmethod
     def battery_level(cls) -> Tuple[str, str]:
         # print(f"android_adb: battery_level")

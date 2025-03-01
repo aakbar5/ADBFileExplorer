@@ -44,6 +44,7 @@ class Resources:
     anim_loading = resource_filename('resources.anim', 'loading.gif')
 
     # Icons for status bar
+    icon_camera = resource_filename('resources.icons.statusbar', 'camera.svg')
     icon_tag = resource_filename('resources.icons.statusbar', 'tag.svg')
     icon_android = resource_filename('resources.icons.statusbar', 'android.svg')
     icon_lock = resource_filename('resources.icons.statusbar', 'lock.svg')

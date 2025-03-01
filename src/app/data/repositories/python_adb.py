@@ -18,6 +18,10 @@ from app.services.adb_helper import ShellCommand
 
 class FileRepository:
     @classmethod
+    def capture_screenshot(cls) -> Tuple[str, str]:
+        return "TODO", "None"
+
+    @classmethod
     def battery_level(cls) -> Tuple[str, str]:
         if not PythonADBManager.device:
             return None, "No device selected!"

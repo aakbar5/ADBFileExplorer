@@ -252,3 +252,50 @@ class DeviceStatusThread(threading.Thread, QObject):
 
     def stop(self):
         self._stop_event.set()
+
+class DeviceCameraWidget(QWidget):
+    IconResource = Resources.icon_camera
+    IconSize = QSize(16, 16)
+    HorizontalSpacing = 2
+
+    def __init__(self, final_stretch=False):
+        super(QWidget, self).__init__()
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self.icon = QLabel()
+        self.icon.setPixmap(QIcon(self.IconResource).pixmap(self.IconSize))
+        self.icon.setVisible(False)
+        layout.addWidget(self.icon)
+        layout.addSpacing(self.HorizontalSpacing)
+        self.icon.mousePressEvent = self.clicked
+
+        self.text_widget = QLabel("Capture screenshot")
+        self.text_widget.setVisible(False)
+        layout.addWidget(self.text_widget)
+        self.text_widget.mousePressEvent = self.clicked
+
+        if final_stretch:
+            layout.addStretch()
+
+        # Connect to device label signal to control visibility of the actions
+        Global().communicate.status_bar_device_label.connect(self.update)
+
+    def update(self, text):
+        text = text.strip()
+        if len(text) == 0:
+            self.icon.setVisible(False)
+            self.text_widget.setVisible(False)
+        else:
+            self.icon.setVisible(True)
+            self.text_widget.setVisible(True)
+
+    def clicked(self, event):
+        okay, file_name = FileRepository.capture_screenshot()
+        if okay is None:
+            Global().communicate.status_bar_general.emit(f"Screenshot is captured ({file_name})", 3000)
+            Global().communicate.files_refresh.emit()
+        else:
+            Global().communicate.status_bar_general.emit("Fail to capture screenshot", 3000)
