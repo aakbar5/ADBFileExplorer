@@ -538,6 +538,10 @@ class FileExplorerWidget(QWidget):
 
     def on_enter_key(self):
         if self.table_view.hasFocus():
+            if self.files is None:
+                print(f"on_enter_key: ignore as nothing is selected")
+                return
+
             selected_count = len([f for f in self.files])
             print(f"on_enter_key: Count={selected_count}")
             if selected_count == 1:
@@ -640,10 +644,14 @@ class FileExplorerWidget(QWidget):
 
     @staticmethod
     def default_download_response(data, error):
+        if error:
+            print(f"download_reponse: {error}")
         FileExplorerWidget.show_notification(data, error, 'Downloaded', 'Download error')
 
     @staticmethod
     def default_download_n_delete_response(data, error):
+        if error:
+            print(f"download_n_delete_response: {error}")
         FileExplorerWidget.show_notification(data, error, 'Downloaded n Deleted', 'Download/Delete error')
         Global.communicate.files_refresh.emit()
 
@@ -738,9 +746,8 @@ class FileExplorerWidget(QWidget):
             # Build title of the notification card
             title = "Download "
             if delete_too:
-                title += "& Delete "
-            title += ": " + file.name
-            print(f"download_files: {title} -> {destination}")
+                title += "n Delete "
+            print(f"download_files: {title} -> destination({destination})")
 
             # Setup job
             helper = ProgressCallbackHelper()
@@ -757,6 +764,7 @@ class FileExplorerWidget(QWidget):
                 Global().communicate.notification.emit(
                     MessageData(
                         title=title,
+                        body=file.name,
                         message_type=MessageType.LOADING_MESSAGE,
                         message_catcher=worker.set_loading_widget
                     )
