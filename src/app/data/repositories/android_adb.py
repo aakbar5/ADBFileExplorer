@@ -177,12 +177,11 @@ class FileRepository:
         if ADBManager.get_device() and source and destination:
             helper = cls.UpDownHelper(progress_callback)
             response = adb_helper.pull(ADBManager.get_device().id, source.path, destination, helper.call)
-
             if not response.is_okay:
                 return None, response.error_data or "\n".join(helper.messages)
             if delete_too is True:
                 return cls.delete(source)
-            return "\n".join(helper.messages), response.error_data
+            return response.error_data or "\n".join(helper.messages), None
         return None, None
 
     @classmethod
@@ -204,7 +203,7 @@ class FileRepository:
             if not response.is_okay:
                 return None, response.error_data or "\n".join(helper.messages)
 
-            return "\n".join(helper.messages), response.error_data
+            return response.error_data or "\n".join(helper.messages), None
         return None, None
 
 
